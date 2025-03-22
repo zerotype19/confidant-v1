@@ -35,4 +35,8 @@ yarn-error.log*
 
 # Cloudflare
 .wrangler
-.dev.vars 
+.dev.vars
+*.dev.vars
+wrangler.dev.toml
+
+# ... rest of the file remains unchanged ... 
