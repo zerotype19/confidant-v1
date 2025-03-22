@@ -28,8 +28,9 @@ app.get('/', (c) => c.json({ status: 'ok' }));
 // Public routes
 app.route('/api/auth', authRouter);
 
-// Protected routes
-app.use('/api/*', verifySession);
+// Protected routes (excluding auth endpoints)
+app.use('/api/onboarding/*', verifySession);
+app.use('/api/children/*', verifySession);
 app.route('/api/onboarding', onboardingRouter);
 app.route('/api/children', childrenRouter);
 

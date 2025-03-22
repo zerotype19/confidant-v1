@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import { getCookie } from 'hono/cookie';
+import { verify } from 'hono/jwt';
 
 interface UserClaims {
   sub: string;
@@ -17,24 +18,20 @@ export function getClaims(c: Context): UserClaims {
   return claims as UserClaims;
 }
 
-export function verifySession() {
-  return async (c: Context, next: () => Promise<void>) => {
-    const sessionToken = getCookie(c, 'session');
-    
-    if (!sessionToken) {
-      return c.json({ error: 'Unauthorized' }, 401);
-    }
+export const verifySession = async (c: Context, next: () => Promise<void>) => {
+  const authToken = getCookie(c, 'auth_token');
+  
+  if (!authToken) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
 
-    try {
-      // TODO: Implement session verification with your auth provider
-      // For now, we'll just parse the JWT and set the claims
-      const [, payload] = sessionToken.split('.');
-      const claims = JSON.parse(Buffer.from(payload, 'base64').toString());
-      
-      c.set('claims', claims);
-      await next();
-    } catch (error) {
-      return c.json({ error: 'Invalid session' }, 401);
-    }
-  };
-} 
+  try {
+    // Verify the JWT token
+    const claims = await verify(authToken, 'your-jwt-secret');
+    c.set('claims', claims);
+    await next();
+  } catch (error) {
+    console.error('Session verification error:', error);
+    return c.json({ error: 'Invalid session' }, 401);
+  }
+}; 
