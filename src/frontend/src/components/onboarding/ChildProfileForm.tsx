@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import OnboardingProgress from './OnboardingProgress';
+import { apiRequest } from '../../utils/api';
 
 const childSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -31,18 +32,10 @@ export default function ChildProfileForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/onboarding/child', {
+      await apiRequest('/onboarding/child', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        body: data,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create child profile');
-      }
 
       navigate('/dashboard');
     } catch (error) {

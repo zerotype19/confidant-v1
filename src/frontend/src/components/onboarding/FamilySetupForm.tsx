@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import OnboardingProgress from './OnboardingProgress';
+import { apiRequest } from '../../utils/api';
 
 // API URL is configured via VITE_API_URL environment variable in Cloudflare Pages
 const familySchema = z.object({
@@ -30,21 +31,11 @@ export default function ParentSetupForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/onboarding/family', {
+      const result = await apiRequest('/onboarding/family', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(data),
+        body: data,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: `HTTP error! status: ${response.status}` }));
-        throw new Error(errorData.error || `Failed to create family (${response.status})`);
-      }
-
-      const result = await response.json();
       console.log('Family created:', result);
       navigate('/onboarding/child');
     } catch (error) {
