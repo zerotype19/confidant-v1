@@ -4,8 +4,7 @@ import { nanoid } from 'nanoid';
 import { getClaims } from '../auth';
 import { D1Database } from '../types';
 import { Context } from 'hono';
-import { getCookie } from 'hono/cookie';
-import { CookieOptions } from 'hono/utils/cookie';
+import { getCookie, setCookie } from 'hono/cookie';
 
 interface Env {
   DB: D1Database;
@@ -13,6 +12,7 @@ interface Env {
   GOOGLE_CLIENT_SECRET: string;
   API_URL: string;
   FRONTEND_URL: string;
+  JWT_SECRET: string;
 }
 
 interface User {
@@ -46,18 +46,17 @@ const authRouter = new Hono<{ Bindings: Env }>();
 
 // Helper function to set auth cookie
 const setAuthCookie = (c: Context, token: string) => {
-  const options: CookieOptions = {
+  setCookie(c, 'auth_token', token, {
     httpOnly: true,
     secure: true,
     sameSite: 'Lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7 // 1 week
-  };
-  c.header('Set-Cookie', `auth_token=${token}; ${Object.entries(options).map(([k, v]) => `${k}=${v}`).join('; ')}`);
+  });
 };
 
 // Helper function to generate JWT
-const generateToken = async (user: User): Promise<string> => {
+const generateToken = async (user: User, env: Env): Promise<string> => {
   const now = Math.floor(Date.now() / 1000);
   const payload: AuthJWTPayload = {
     sub: user.id,
@@ -68,7 +67,7 @@ const generateToken = async (user: User): Promise<string> => {
     iat: now,
     exp: now + (60 * 60 * 24 * 7) // 1 week
   };
-  return await sign(payload, 'your-jwt-secret'); // TODO: Move to environment variable
+  return await sign(payload, env.JWT_SECRET);
 };
 
 // Google OAuth endpoints
@@ -165,7 +164,7 @@ authRouter.get('/google/callback', async (c) => {
     }
 
     // Generate JWT and set cookie
-    const token = await generateToken(user);
+    const token = await generateToken(user, c.env);
     setAuthCookie(c, token);
     return c.redirect(`${c.env.FRONTEND_URL}/onboarding/family`);
   } catch (error) {
@@ -189,8 +188,8 @@ authRouter.get('/validate', async (c) => {
   }
 
   try {
-    // Verify the JWT token
-    const claims = await verify(authToken, 'your-jwt-secret');
+    // Verify the JWT token using environment variable
+    const claims = await verify(authToken, c.env.JWT_SECRET);
     return c.json({ success: true, user: claims });
   } catch (error) {
     console.error('Session validation error:', error);
