@@ -47,20 +47,20 @@ const authRouter = new Hono<{ Bindings: Env }>();
 
 // Add CORS middleware
 authRouter.use('/*', cors({
-  origin: (origin) => origin?.endsWith('.pages.dev') ? origin : 'https://confidant-web.pages.dev',
+  origin: 'https://confidant-web.pages.dev',
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposeHeaders: ['Set-Cookie'],
   maxAge: 86400,
 }));
 
 // Helper function to set auth cookie
 const setAuthCookie = (c: Context, token: string) => {
-  const frontendDomain = new URL(c.env.FRONTEND_URL).hostname;
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
     secure: true,
     sameSite: 'None', // Required for cross-origin
-    domain: frontendDomain.includes('pages.dev') ? '.pages.dev' : frontendDomain,
     path: '/',
     maxAge: 60 * 60 * 24 * 7 // 1 week
   });
