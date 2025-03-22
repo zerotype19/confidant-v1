@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function SignIn() {
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
 
     try {
+      // TODO: Implement actual auth logic
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: {
@@ -21,13 +24,17 @@ export default function SignIn() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'Failed to sign in')
+        throw new Error('Invalid credentials')
       }
 
+      const data = await response.json()
+      // Store the token in localStorage
+      localStorage.setItem('auth_token', data.token)
       navigate('/dashboard')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError('Invalid email or password')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -36,14 +43,14 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <img
           className="mx-auto h-12 w-auto"
           src="/logo.svg"
           alt="Confidant"
         />
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
@@ -62,7 +69,7 @@ export default function SignIn() {
                 <div className="text-sm text-red-700">{error}</div>
               </div>
             )}
-
+            
             <div>
               <label htmlFor="email" className="label">
                 Email address
@@ -99,12 +106,33 @@ export default function SignIn() {
               </div>
             </div>
 
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                  Forgot your password?
+                </a>
+              </div>
+            </div>
+
             <div>
               <button
                 type="submit"
-                className="btn btn-primary w-full"
+                disabled={isLoading}
+                className="w-full btn btn-primary"
               >
-                Sign in
+                {isLoading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
           </form>
