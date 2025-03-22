@@ -3,12 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "packageManager": "npm@9.6.7",
   "engines": {
     "node": "18.19.0",
     "npm": "9.6.7"
   },
   "scripts": {
-    "build": "cd src/frontend && npm install && npm run build"
+    "build": "cd src/frontend && npx npm@9.6.7 install && npx npm@9.6.7 run build"
+  },
+  "volta": {
+    "node": "18.19.0",
+    "npm": "9.6.7"
   }
 } 
