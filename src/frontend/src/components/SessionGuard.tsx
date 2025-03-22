@@ -12,36 +12,26 @@ export default function SessionGuard({ children }: SessionGuardProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token')
-      
-      if (!token) {
-        setIsAuthenticated(false)
-        navigate('/signin', { state: { from: location.pathname } })
-        return
-      }
-
       try {
-        // TODO: Implement actual token validation
-        const response = await fetch('/api/auth/validate', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        // Validate session using the auth cookie
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/validate`, {
+          credentials: 'include' // This is important for sending cookies
+        });
 
         if (!response.ok) {
-          throw new Error('Invalid token')
+          throw new Error('Invalid session');
         }
 
-        setIsAuthenticated(true)
+        setIsAuthenticated(true);
       } catch (err) {
-        localStorage.removeItem('auth_token')
-        setIsAuthenticated(false)
-        navigate('/signin', { state: { from: location.pathname } })
+        console.error('Auth error:', err);
+        setIsAuthenticated(false);
+        navigate('/signin', { state: { from: location.pathname } });
       }
-    }
+    };
 
-    checkAuth()
-  }, [navigate, location])
+    checkAuth();
+  }, [navigate, location]);
 
   if (isAuthenticated === null) {
     // Show loading state while checking authentication
@@ -49,8 +39,8 @@ export default function SessionGuard({ children }: SessionGuardProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
       </div>
-    )
+    );
   }
 
-  return isAuthenticated ? <>{children}</> : null
+  return isAuthenticated ? <>{children}</> : null;
 } 
