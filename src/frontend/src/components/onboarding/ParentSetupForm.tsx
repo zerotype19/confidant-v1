@@ -1,45 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import OnboardingProgress from './OnboardingProgress';
+
+const parentSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  phoneNumber: z.string().min(10, 'Valid phone number is required'),
+  timezone: z.string().min(1, 'Timezone is required'),
+});
+
+type ParentFormData = z.infer<typeof parentSchema>;
 
 export default function ParentSetupForm() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<ParentFormData>({
+    resolver: zodResolver(parentSchema),
+    defaultValues: {
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  useEffect(() => {
+    // Load existing parent data if available
+    const loadParentData = async () => {
+      try {
+        const response = await fetch('/api/parent');
+        if (response.ok) {
+          const data = await response.json();
+          setValue('firstName', data.first_name);
+          setValue('lastName', data.last_name);
+          setValue('phoneNumber', data.phone_number);
+          setValue('timezone', data.timezone);
+        }
+      } catch (error) {
+        console.error('Error loading parent data:', error);
+      }
+    };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    loadParentData();
+  }, [setValue]);
+
+  const onSubmit = async (data: ParentFormData) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      // TODO: Implement API call to save parent data
       const response = await fetch('/api/parent/setup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save parent information');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save parent information');
       }
 
       navigate('/onboarding/child-profile');
     } catch (error) {
-      console.error('Error saving parent information:', error);
-      // TODO: Show error message to user
+      setError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="text-center text-3xl font-extrabold text-gray-900">
           Parent Account Setup
@@ -49,9 +88,17 @@ export default function ParentSetupForm() {
         </p>
       </div>
 
+      <OnboardingProgress />
+
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
                 First Name
@@ -59,13 +106,15 @@ export default function ParentSetupForm() {
               <div className="mt-1">
                 <input
                   id="firstName"
-                  name="firstName"
                   type="text"
-                  required
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  {...register('firstName')}
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
+                    errors.firstName ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {errors.firstName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                )}
               </div>
             </div>
 
@@ -76,13 +125,15 @@ export default function ParentSetupForm() {
               <div className="mt-1">
                 <input
                   id="lastName"
-                  name="lastName"
                   type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  {...register('lastName')}
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
+                    errors.lastName ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {errors.lastName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+                )}
               </div>
             </div>
 
@@ -93,14 +144,16 @@ export default function ParentSetupForm() {
               <div className="mt-1">
                 <input
                   id="phoneNumber"
-                  name="phoneNumber"
                   type="tel"
-                  required
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  {...register('phoneNumber')}
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
+                    errors.phoneNumber ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   placeholder="+1 (555) 555-5555"
                 />
+                {errors.phoneNumber && (
+                  <p className="mt-1 text-sm text-red-600">{errors.phoneNumber.message}</p>
+                )}
               </div>
             </div>
 
@@ -111,11 +164,8 @@ export default function ParentSetupForm() {
               <div className="mt-1">
                 <input
                   id="timezone"
-                  name="timezone"
                   type="text"
-                  required
-                  value={formData.timezone}
-                  onChange={handleChange}
+                  {...register('timezone')}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                   readOnly
                 />
@@ -127,14 +177,16 @@ export default function ParentSetupForm() {
                 type="button"
                 onClick={() => navigate('/onboarding/welcome')}
                 className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                disabled={isLoading}
               >
                 Back
               </button>
               <button
                 type="submit"
                 className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                disabled={isLoading}
               >
-                Continue
+                {isLoading ? 'Saving...' : 'Continue'}
               </button>
             </div>
           </form>
