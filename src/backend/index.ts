@@ -7,8 +7,23 @@ import childrenRouter from './api/children';
 
 const app = new Hono();
 
+// Global error handler
+app.onError((err, c) => {
+  console.error('API Error:', err);
+  return c.json({
+    success: false,
+    error: err.message
+  }, 500);
+});
+
 // Enable CORS
-app.use('*', cors());
+app.use('*', cors({
+  origin: ['https://confidant-web.pages.dev', 'http://localhost:5173'],
+  credentials: true,
+}));
+
+// Health check
+app.get('/', (c) => c.json({ status: 'ok' }));
 
 // Public routes
 app.route('/api/auth', authRouter);
