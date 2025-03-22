@@ -77,7 +77,7 @@ authRouter.get('/google', async (c) => {
       throw new Error('GOOGLE_CLIENT_ID is not configured');
     }
 
-    const redirectUri = `${c.env.FRONTEND_URL}/auth/callback`;
+    const redirectUri = `${c.env.API_URL}/api/auth/google/callback`;
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${c.env.GOOGLE_CLIENT_ID}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
