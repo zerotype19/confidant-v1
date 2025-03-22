@@ -11,6 +11,7 @@ import { OnboardingWelcome } from './components/onboarding/OnboardingWelcome'
 import FamilySetupForm from './components/onboarding/FamilySetupForm'
 import ChildProfileForm from './components/onboarding/ChildProfileForm'
 import { Toaster } from './components/ui/toaster'
+import { AuthCallback } from './components/auth/AuthCallback'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="signin" element={<SignIn />} />
             <Route path="signup" element={<SignUp />} />
+            <Route path="auth/callback" element={<AuthCallback />} />
           </Route>
 
           {/* Protected routes */}
