@@ -2,7 +2,7 @@ name = "confidant-web"
 compatibility_date = "2024-09-23"
 
 [build]
-command = "cd src/frontend && npm install && npm run build"
+command = "cd src/frontend && npm install --verbose && npm run build --verbose"
 cwd = "."
 
 [site]
