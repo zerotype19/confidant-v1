@@ -1,13 +1,6 @@
 name = "confidant-web"
 compatibility_date = "2024-09-23"
 
-[build]
-command = "npm install --no-package-lock && npm run build"
-cwd = "."
-
-[site]
-bucket = "dist"
-
 [pages]
 pages_build_output_dir = "dist"
 build_command = "npm install --no-package-lock && npm run build"
