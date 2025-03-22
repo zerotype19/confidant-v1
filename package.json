@@ -10,6 +10,7 @@
     "build": "cd src/frontend && npm install && npm run build"
   },
   "dependencies": {
+    "hono": "^4.7.5",
     "nanoid": "^5.1.5",
     "zod": "^3.24.2"
   }

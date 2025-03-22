@@ -1,18 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import OnboardingProgress from './OnboardingProgress';
 
-const parentSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  phoneNumber: z.string().min(10, 'Valid phone number is required'),
-  timezone: z.string().min(1, 'Timezone is required'),
+const familySchema = z.object({
+  name: z.string().min(1, 'Family name is required'),
 });
 
-type ParentFormData = z.infer<typeof parentSchema>;
+type FamilyFormData = z.infer<typeof familySchema>;
 
 export default function ParentSetupForm() {
   const navigate = useNavigate();
@@ -22,41 +19,17 @@ export default function ParentSetupForm() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
-  } = useForm<ParentFormData>({
-    resolver: zodResolver(parentSchema),
-    defaultValues: {
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    },
+  } = useForm<FamilyFormData>({
+    resolver: zodResolver(familySchema),
   });
 
-  useEffect(() => {
-    // Load existing parent data if available
-    const loadParentData = async () => {
-      try {
-        const response = await fetch('/api/parent');
-        if (response.ok) {
-          const data = await response.json();
-          setValue('firstName', data.first_name);
-          setValue('lastName', data.last_name);
-          setValue('phoneNumber', data.phone_number);
-          setValue('timezone', data.timezone);
-        }
-      } catch (error) {
-        console.error('Error loading parent data:', error);
-      }
-    };
-
-    loadParentData();
-  }, [setValue]);
-
-  const onSubmit = async (data: ParentFormData) => {
+  const onSubmit = async (data: FamilyFormData) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/parent/setup', {
+      const response = await fetch('/api/onboarding/family', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +39,7 @@ export default function ParentSetupForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save parent information');
+        throw new Error(errorData.error || 'Failed to create family');
       }
 
       navigate('/onboarding/child-profile');
@@ -81,10 +54,10 @@ export default function ParentSetupForm() {
     <div className="min-h-screen bg-gray-50 flex flex-col py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="text-center text-3xl font-extrabold text-gray-900">
-          Parent Account Setup
+          Family Setup
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Please provide your information to complete the setup
+          Let's create your family profile
         </p>
       </div>
 
@@ -100,75 +73,22 @@ export default function ParentSetupForm() {
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                First Name
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Family Name
               </label>
               <div className="mt-1">
                 <input
-                  id="firstName"
+                  id="name"
                   type="text"
-                  {...register('firstName')}
+                  {...register('name')}
                   className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-                    errors.firstName ? 'border-red-300' : 'border-gray-300'
+                    errors.name ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="e.g., The Smith Family"
                 />
-                {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
                 )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                Last Name
-              </label>
-              <div className="mt-1">
-                <input
-                  id="lastName"
-                  type="text"
-                  {...register('lastName')}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-                    errors.lastName ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
-                Phone Number
-              </label>
-              <div className="mt-1">
-                <input
-                  id="phoneNumber"
-                  type="tel"
-                  {...register('phoneNumber')}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-                    errors.phoneNumber ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="+1 (555) 555-5555"
-                />
-                {errors.phoneNumber && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phoneNumber.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">
-                Time Zone
-              </label>
-              <div className="mt-1">
-                <input
-                  id="timezone"
-                  type="text"
-                  {...register('timezone')}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  readOnly
-                />
               </div>
             </div>
 
@@ -186,7 +106,7 @@ export default function ParentSetupForm() {
                 className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 disabled={isLoading}
               >
-                {isLoading ? 'Saving...' : 'Continue'}
+                {isLoading ? 'Creating...' : 'Continue'}
               </button>
             </div>
           </form>

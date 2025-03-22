@@ -6,12 +6,9 @@ import { z } from 'zod';
 import OnboardingProgress from './OnboardingProgress';
 
 const childSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  dateOfBirth: z.string().min(1, 'Date of birth is required'),
-  gender: z.string().min(1, 'Gender is required'),
-  schoolName: z.string().optional(),
-  grade: z.string().optional(),
+  name: z.string().min(1, 'Name is required'),
+  age: z.number().min(0, 'Age must be a positive number'),
+  avatarUrl: z.string().optional(),
 });
 
 type ChildFormData = z.infer<typeof childSchema>;
@@ -34,7 +31,7 @@ export default function ChildProfileForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/child/profile', {
+      const response = await fetch('/api/onboarding/child', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,7 +41,7 @@ export default function ChildProfileForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save child profile');
+        throw new Error(errorData.error || 'Failed to create child profile');
       }
 
       navigate('/dashboard');
@@ -78,118 +75,56 @@ export default function ChildProfileForm() {
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                First Name
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Child's Name
               </label>
               <div className="mt-1">
                 <input
-                  id="firstName"
+                  id="name"
                   type="text"
-                  {...register('firstName')}
+                  {...register('name')}
                   className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-                    errors.firstName ? 'border-red-300' : 'border-gray-300'
+                    errors.name ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
-                {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                Last Name
+              <label htmlFor="age" className="block text-sm font-medium text-gray-700">
+                Age
               </label>
               <div className="mt-1">
                 <input
-                  id="lastName"
-                  type="text"
-                  {...register('lastName')}
+                  id="age"
+                  type="number"
+                  min="0"
+                  {...register('age', { valueAsNumber: true })}
                   className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-                    errors.lastName ? 'border-red-300' : 'border-gray-300'
+                    errors.age ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
-                {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+                {errors.age && (
+                  <p className="mt-1 text-sm text-red-600">{errors.age.message}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
-                Date of Birth
+              <label htmlFor="avatarUrl" className="block text-sm font-medium text-gray-700">
+                Avatar URL (Optional)
               </label>
               <div className="mt-1">
                 <input
-                  id="dateOfBirth"
-                  type="date"
-                  {...register('dateOfBirth')}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-                    errors.dateOfBirth ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {errors.dateOfBirth && (
-                  <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
-                Gender
-              </label>
-              <div className="mt-1">
-                <select
-                  id="gender"
-                  {...register('gender')}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
-                    errors.gender ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                  <option value="prefer-not-to-say">Prefer not to say</option>
-                </select>
-                {errors.gender && (
-                  <p className="mt-1 text-sm text-red-600">{errors.gender.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="schoolName" className="block text-sm font-medium text-gray-700">
-                School Name
-              </label>
-              <div className="mt-1">
-                <input
-                  id="schoolName"
+                  id="avatarUrl"
                   type="text"
-                  {...register('schoolName')}
+                  {...register('avatarUrl')}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  placeholder="https://example.com/avatar.jpg"
                 />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="grade" className="block text-sm font-medium text-gray-700">
-                Grade
-              </label>
-              <div className="mt-1">
-                <select
-                  id="grade"
-                  {...register('grade')}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                >
-                  <option value="">Select grade</option>
-                  <option value="k">Kindergarten</option>
-                  {[...Array(12)].map((_, i) => (
-                    <option key={i + 1} value={String(i + 1)}>
-                      Grade {i + 1}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 
@@ -207,7 +142,7 @@ export default function ChildProfileForm() {
                 className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 disabled={isLoading}
               >
-                {isLoading ? 'Saving...' : 'Complete Setup'}
+                {isLoading ? 'Creating...' : 'Complete Setup'}
               </button>
             </div>
           </form>
