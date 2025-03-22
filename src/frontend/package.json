@@ -1,15 +1,15 @@
 {
-  "name": "confidant",
-  "version": "1.0.0",
+  "name": "confidant-web-frontend",
   "private": true,
-  "workspaces": [
-    "src/frontend"
-  ],
-  "scripts": {
-    "build": "cd src/frontend && npm install && npm run build"
-  },
+  "version": "0.1.0",
+  "type": "module",
   "engines": {
-    "node": ">=18.19.0"
+    "node": "18.19.0",
+    "npm": "9.6.7"
   },
-  "packageManager": "npm@9.6.7"
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  }
 } 
