@@ -1,7 +1,9 @@
 import { Context, Next } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { createJWT } from "lucia/jwt"
+import jwt from "jsonwebtoken"
 import { Env } from "../types"
+
+const JWT_SECRET = "your-secret-key" // TODO: Move to environment variable
 
 export interface AuthContext extends Context<Env> {
   user: {
@@ -17,25 +19,29 @@ export async function authMiddleware(c: Context<Env>, next: Next) {
     throw new HTTPException(401, { message: "Unauthorized" })
   }
 
-  const db = c.env.DB
-  const sessionId = await createJWT.verify(token)
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { userId: string }
+    const db = c.env.DB
 
-  const session = await db
-    .prepare(
-      "SELECT s.*, u.id as user_id, u.email, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > datetime('now')"
-    )
-    .bind(sessionId)
-    .first()
+    const session = await db
+      .prepare(
+        "SELECT s.*, u.id as user_id, u.email, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > datetime('now')"
+      )
+      .bind(payload.userId)
+      .first()
 
-  if (!session) {
-    throw new HTTPException(401, { message: "Session expired" })
+    if (!session) {
+      throw new HTTPException(401, { message: "Session expired" })
+    }
+
+    ;(c as AuthContext).user = {
+      id: session.user_id,
+      email: session.email,
+      name: session.name,
+    }
+
+    await next()
+  } catch (error) {
+    throw new HTTPException(401, { message: "Invalid token" })
   }
-
-  ;(c as AuthContext).user = {
-    id: session.user_id,
-    email: session.email,
-    name: session.name,
-  }
-
-  await next()
 } 

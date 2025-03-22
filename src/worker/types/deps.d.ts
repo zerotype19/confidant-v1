@@ -26,13 +26,62 @@ declare module 'oslo/oauth' {
 }
 
 declare module 'hono' {
-  interface Context {
+  export class Hono<E = {}> {
+    get(path: string, ...handlers: any[]): this
+    post(path: string, ...handlers: any[]): this
+    put(path: string, ...handlers: any[]): this
+    delete(path: string, ...handlers: any[]): this
+    use(path: string, ...handlers: any[]): this
+    route(path: string, app: Hono<E>): this
+  }
+
+  export class Context<E = {}> {
+    env: E
+    req: {
+      url: string
+      header(name: string): string | undefined
+      query(name: string): string | undefined
+      valid<T>(type: string): T
+    }
+    json(data: any): Response
+    redirect(url: string): Response
     cookie(name: string, value?: string, options?: {
-      httpOnly?: boolean;
-      secure?: boolean;
-      sameSite?: 'Strict' | 'Lax' | 'None';
-      maxAge?: number;
-      path?: string;
-    }): string | undefined;
+      httpOnly?: boolean
+      secure?: boolean
+      sameSite?: 'Strict' | 'Lax' | 'None'
+      maxAge?: number
+      path?: string
+    }): string | undefined
+  }
+
+  export type Next = () => Promise<void>
+}
+
+declare module 'hono/http-exception' {
+  export class HTTPException extends Error {
+    constructor(status: number, options?: { message?: string })
+  }
+}
+
+declare module '@hono/zod-validator' {
+  import { z } from 'zod'
+  export function zValidator(type: string, schema: z.ZodType): any
+}
+
+declare module '@hono/oauth-providers/google' {
+  import { Context } from 'hono'
+  export function googleAuth(options: {
+    client_id: string
+    client_secret: string
+    redirect_uri: string
+    scope: string[]
+  }): {
+    getAuthorizationUrl(c: Context): Promise<string>
+    getAccessToken(c: Context, code: string): Promise<{ accessToken: string }>
+    getUserInfo(accessToken: string): Promise<{
+      sub: string
+      email: string
+      name: string
+    }>
   }
 } 

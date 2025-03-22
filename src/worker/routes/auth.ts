@@ -1,13 +1,11 @@
-import { Hono } from "hono"
+import { Hono, Context } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
-import { generateId } from "lucia"
-import { Argon2id } from "oslo/password"
-import { createJWT } from "lucia/jwt"
-import { GoogleOAuth2Client } from "oslo/oauth"
-import { authMiddleware } from "../middleware/auth"
+import bcrypt from "bcryptjs"
+import { googleAuth } from "@hono/oauth-providers/google"
 import { Env, AuthContext } from "../types"
+import { signJWT, verifyJWT } from "../utils/jwt"
 
 const auth = new Hono<Env>()
 
@@ -23,15 +21,19 @@ const signInSchema = z.object({
   password: z.string(),
 })
 
+type SignUpBody = z.infer<typeof signUpSchema>
+type SignInBody = z.infer<typeof signInSchema>
+
 // Initialize Google OAuth client
-const googleClient = new GoogleOAuth2Client(
-  process.env.GOOGLE_CLIENT_ID!,
-  process.env.GOOGLE_CLIENT_SECRET!,
-  `${process.env.API_URL}/api/auth/google/callback`
-)
+const google = googleAuth({
+  client_id: process.env.GOOGLE_CLIENT_ID!,
+  client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+  redirect_uri: `${process.env.API_URL}/api/auth/google/callback`,
+  scope: ["email", "profile"],
+})
 
 // Get current user
-auth.get("/me", authMiddleware, async (c) => {
+auth.get("/me", async (c: Context<Env>) => {
   const db = c.env.DB
   const userId = (c as AuthContext).user.id
 
@@ -57,8 +59,9 @@ auth.get("/me", authMiddleware, async (c) => {
 })
 
 // Sign up with email/password
-auth.post("/signup", zValidator("json", signUpSchema), async (c) => {
-  const { email, password, name } = c.req.valid("json")
+auth.post("/signup", zValidator("json", signUpSchema), async (c: Context<Env>) => {
+  const data = c.req.valid("json") as SignUpBody
+  const { email, password, name } = data
   const db = c.env.DB
 
   // Check if user exists
@@ -72,10 +75,11 @@ auth.post("/signup", zValidator("json", signUpSchema), async (c) => {
   }
 
   // Hash password
-  const hashedPassword = await new Argon2id().hash(password)
+  const salt = await bcrypt.genSalt(10)
+  const hashedPassword = await bcrypt.hash(password, salt)
 
   // Create user
-  const userId = generateId(15)
+  const userId = crypto.randomUUID()
   await db
     .prepare(
       "INSERT INTO users (id, email, password_hash, name, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
@@ -84,7 +88,7 @@ auth.post("/signup", zValidator("json", signUpSchema), async (c) => {
     .run()
 
   // Create default family
-  const familyId = generateId(15)
+  const familyId = crypto.randomUUID()
   await db
     .prepare(
       "INSERT INTO families (id, name, created_at) VALUES (?, ?, datetime('now'))"
@@ -97,125 +101,85 @@ auth.post("/signup", zValidator("json", signUpSchema), async (c) => {
     .prepare(
       "INSERT INTO family_members (id, family_id, user_id, role) VALUES (?, ?, ?, 'guardian')"
     )
-    .bind(generateId(15), familyId, userId)
+    .bind(crypto.randomUUID(), familyId, userId)
     .run()
 
-  // Create session
-  const sessionId = generateId(15)
-  const token = await createJWT(sessionId, {
-    userId,
-    expiresIn: "30d",
-  })
-
-  await db
-    .prepare(
-      "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, datetime('now', '+30 days'))"
-    )
-    .bind(sessionId, userId)
-    .run()
+  // Create token
+  const token = await signJWT({ userId })
 
   return c.json({ token })
 })
 
 // Sign in with email/password
-auth.post("/signin", zValidator("json", signInSchema), async (c) => {
-  const { email, password } = c.req.valid("json")
+auth.post("/signin", zValidator("json", signInSchema), async (c: Context<Env>) => {
+  const data = c.req.valid("json") as SignInBody
+  const { email, password } = data
   const db = c.env.DB
 
   // Get user
   const user = await db
     .prepare("SELECT * FROM users WHERE email = ?")
     .bind(email)
-    .first()
+    .first<{ id: string; password_hash: string }>()
 
   if (!user) {
     throw new HTTPException(400, { message: "Invalid email or password" })
   }
 
   // Verify password
-  const validPassword = await new Argon2id().verify(
-    user.password_hash,
-    password
-  )
+  const validPassword = await bcrypt.compare(password, user.password_hash)
 
   if (!validPassword) {
     throw new HTTPException(400, { message: "Invalid email or password" })
   }
 
-  // Create session
-  const sessionId = generateId(15)
-  const token = await createJWT(sessionId, {
-    userId: user.id,
-    expiresIn: "30d",
-  })
-
-  await db
-    .prepare(
-      "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, datetime('now', '+30 days'))"
-    )
-    .bind(sessionId, user.id)
-    .run()
+  // Create token
+  const token = await signJWT({ userId: user.id })
 
   return c.json({ token })
 })
 
 // Google OAuth login
-auth.get("/google", async (c) => {
-  const [url, state] = await googleClient.createAuthorizationURL({
-    scope: ["email", "profile"],
-  })
-
-  // Store state in cookie for verification
-  c.cookie("oauth_state", state, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Lax",
-    maxAge: 60 * 60, // 1 hour
-    path: "/",
-  })
-
-  return c.redirect(url.toString())
+auth.get("/google", async (c: Context<Env>) => {
+  const authUrl = await google.getAuthorizationUrl(c)
+  return c.redirect(authUrl)
 })
 
 // Google OAuth callback
-auth.get("/google/callback", async (c) => {
-  const state = c.cookie("oauth_state") || ""
-  const searchParams = new URL(c.req.url).searchParams
-  const code = searchParams.get("code")
-  const returnedState = searchParams.get("state")
-
-  if (!state || !code || !returnedState || state !== returnedState) {
-    throw new HTTPException(400, { message: "Invalid OAuth state" })
+auth.get("/google/callback", async (c: Context<Env>) => {
+  const code = c.req.query("code")
+  if (!code) {
+    throw new HTTPException(400, { message: "Missing authorization code" })
   }
 
-  const { accessToken, idToken } = await googleClient.validateCallback(code)
-  const googleUser = await googleClient.getUserInfo(accessToken)
+  const oauth = await google.getAccessToken(c, code)
+  const userInfo = await google.getUserInfo(oauth.accessToken)
 
   const db = c.env.DB
 
   // Check if user exists
   let user = await db
     .prepare("SELECT * FROM users WHERE email = ?")
-    .bind(googleUser.email)
-    .first()
+    .bind(userInfo.email)
+    .first<{ id: string; email: string; name: string }>()
 
   if (!user) {
     // Create new user
-    const userId = generateId(15)
+    const userId = crypto.randomUUID()
     await db
       .prepare(
         "INSERT INTO users (id, email, name, auth_provider, auth_provider_id, created_at) VALUES (?, ?, ?, 'google', ?, datetime('now'))"
       )
-      .bind(userId, googleUser.email, googleUser.name, googleUser.id)
+      .bind(userId, userInfo.email, userInfo.name, userInfo.sub)
       .run()
 
     // Create default family
-    const familyId = generateId(15)
+    const familyId = crypto.randomUUID()
     await db
       .prepare(
         "INSERT INTO families (id, name, created_at) VALUES (?, ?, datetime('now'))"
       )
-      .bind(familyId, `${googleUser.name}'s Family`)
+      .bind(familyId, `${userInfo.name}'s Family`)
       .run()
 
     // Add user to family
@@ -223,29 +187,18 @@ auth.get("/google/callback", async (c) => {
       .prepare(
         "INSERT INTO family_members (id, family_id, user_id, role) VALUES (?, ?, ?, 'guardian')"
       )
-      .bind(generateId(15), familyId, userId)
+      .bind(crypto.randomUUID(), familyId, userId)
       .run()
 
     user = {
       id: userId,
-      email: googleUser.email,
-      name: googleUser.name,
+      email: userInfo.email,
+      name: userInfo.name,
     }
   }
 
-  // Create session
-  const sessionId = generateId(15)
-  const token = await createJWT(sessionId, {
-    userId: user.id,
-    expiresIn: "30d",
-  })
-
-  await db
-    .prepare(
-      "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, datetime('now', '+30 days'))"
-    )
-    .bind(sessionId, user.id)
-    .run()
+  // Create token
+  const token = await signJWT({ userId: user.id })
 
   // Redirect to frontend with token
   return c.redirect(
@@ -254,21 +207,18 @@ auth.get("/google/callback", async (c) => {
 })
 
 // Sign out
-auth.post("/signout", authMiddleware, async (c) => {
+auth.post("/signout", async (c: Context<Env>) => {
   const token = c.req.header("Authorization")?.split(" ")[1]
   if (!token) {
     throw new HTTPException(401, { message: "Unauthorized" })
   }
 
-  const db = c.env.DB
-  const sessionId = await createJWT.verify(token)
-
-  await db
-    .prepare("DELETE FROM sessions WHERE id = ?")
-    .bind(sessionId)
-    .run()
-
-  return c.json({ success: true })
+  try {
+    const payload = await verifyJWT(token)
+    return c.json({ success: true })
+  } catch (error) {
+    throw new HTTPException(401, { message: "Invalid token" })
+  }
 })
 
 export default auth 
