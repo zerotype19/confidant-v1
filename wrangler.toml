@@ -1,14 +1,14 @@
-name = "confidant-api"
+name = "confidant-web"
 main = "src/api/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 [build]
-command = "npm run build"
-cwd = "."
+command = "npm install && npm run build"
+cwd = "src/frontend"
 
 [site]
-bucket = "./dist"
+bucket = "src/frontend/dist"
 
 [vars]
 ENVIRONMENT = "development"
@@ -48,4 +48,7 @@ database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
 [[env.development.r2_buckets]]
 binding = "STORAGE"
 bucket_name = "confidant-storage"
-preview_bucket_name = "confidant-storage-dev" 
+preview_bucket_name = "confidant-storage-dev"
+
+[pages]
+pages_build_output_dir = "src/frontend/dist" 
