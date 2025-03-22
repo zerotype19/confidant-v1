@@ -1,0 +1,14 @@
+{
+  "name": "confidant-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "npm@9.6.7",
+  "engines": {
+    "node": "18.19.0",
+    "npm": "9.6.7"
+  },
+  "scripts": {
+    "build": "npm install && npm run build"
+  }
+} 
