@@ -30,8 +30,7 @@ export default function ParentSetupForm() {
     setError(null);
 
     try {
-      console.log('Making request to:', `${import.meta.env.VITE_API_URL}/api/onboarding/family`);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/onboarding/family`, {
+      const response = await fetch('/api/onboarding/family', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
