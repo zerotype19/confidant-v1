@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
-import { sign } from 'hono/jwt';
+import { sign, verify } from 'hono/jwt';
 import { nanoid } from 'nanoid';
 import { getClaims } from '../auth';
 import { D1Database } from '../types';
 import { Context } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { CookieOptions } from 'hono/utils/cookie';
 
 interface Env {
@@ -177,6 +178,24 @@ authRouter.get('/google/callback', async (c) => {
 authRouter.post('/logout', async (c) => {
   setAuthCookie(c, '');
   return c.json({ success: true });
+});
+
+// Validate session endpoint
+authRouter.get('/validate', async (c) => {
+  const authToken = getCookie(c, 'auth_token');
+  
+  if (!authToken) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  try {
+    // Verify the JWT token
+    const claims = await verify(authToken, 'your-jwt-secret');
+    return c.json({ success: true, user: claims });
+  } catch (error) {
+    console.error('Session validation error:', error);
+    return c.json({ error: 'Invalid session' }, 401);
+  }
 });
 
 export default authRouter; 
