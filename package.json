@@ -1,0 +1,14 @@
+{
+  "name": "confidant",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "src/frontend"
+  ],
+  "scripts": {
+    "build": "cd src/frontend && npm install && npm run build"
+  },
+  "engines": {
+    "node": ">=18.19.0"
+  }
+} 
