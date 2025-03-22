@@ -1,13 +1,34 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path'
+import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'src/api/index.ts'),
+      },
+      output: {
+        dir: 'dist',
+        format: 'es',
+      },
+      external: [
+        '@hono/oauth-providers/google',
+        'bcryptjs',
+        'jsonwebtoken',
+        'hono',
+        '@hono/zod-validator',
+        'zod',
+      ],
+    },
+    target: 'esnext',
+    minify: false,
+  },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': resolve(__dirname, './src'),
     },
   },
   server: {
@@ -16,17 +37,6 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8787',
         changeOrigin: true,
-      },
-    },
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-        },
       },
     },
   },
