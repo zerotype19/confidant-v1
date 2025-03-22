@@ -7,7 +7,7 @@ pages_build_output_dir = "src/frontend/dist"
 
 [env]
 NODE_VERSION = "18.19.0"
-VITE_API_URL = "https://confidant-api-development.kevin-mcgovern.workers.dev"
+VITE_API_URL = "https://confidant-api.kevin-mcgovern.workers.dev"
 VITE_CLOUDFLARE_ACCOUNT_ID = "315111a87fcb293ac0efd819b6e59147"
 
 # API Configuration
