@@ -9,7 +9,10 @@ interface ApiOptions {
 export async function apiRequest(endpoint: string, options: ApiOptions = {}) {
   const { method = 'GET', body, headers = {} } = options;
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  // Add /api prefix to all endpoints
+  const path = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
+
+  const response = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
