@@ -1,0 +1,44 @@
+name = "confidant-api"
+main = "src/api/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "confidant-db"
+database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
+
+[[env.production.r2_buckets]]
+binding = "STORAGE"
+bucket_name = "confidant-storage"
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "confidant-db"
+database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
+
+[[env.staging.r2_buckets]]
+binding = "STORAGE"
+bucket_name = "confidant-storage"
+
+[env.development]
+vars = { ENVIRONMENT = "development" }
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "confidant-db"
+database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
+
+[[env.development.r2_buckets]]
+binding = "STORAGE"
+bucket_name = "confidant-storage"
+preview_bucket_name = "confidant-storage-dev" 
