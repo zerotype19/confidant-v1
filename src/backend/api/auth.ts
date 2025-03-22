@@ -10,7 +10,6 @@ interface Env {
   DB: D1Database;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
-  APPLE_CLIENT_ID: string;
   VITE_API_URL: string;
 }
 
@@ -28,11 +27,6 @@ interface GoogleUser {
   id: string;
   email: string;
   name: string;
-}
-
-interface AppleUser {
-  sub: string;
-  email: string;
 }
 
 type AuthJWTPayload = {
@@ -145,71 +139,7 @@ authRouter.get('/google/callback', async (c) => {
   // Generate JWT and set cookie
   const token = await generateToken(user);
   setAuthCookie(c, token);
-  return c.redirect('/onboarding/welcome');
-});
-
-// Apple Sign In endpoints
-authRouter.get('/apple', async (c) => {
-  const redirectUri = `${c.env.VITE_API_URL}/api/auth/apple/callback`;
-  const state = nanoid();
-  
-  const appleAuthUrl = `https://appleid.apple.com/auth/authorize?` +
-    `client_id=${c.env.APPLE_CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&response_type=code id_token` +
-    `&scope=${encodeURIComponent('name email')}` +
-    `&response_mode=form_post` +
-    `&state=${state}`;
-
-  return c.redirect(appleAuthUrl);
-});
-
-authRouter.post('/apple/callback', async (c) => {
-  const formData = await c.req.formData();
-  const code = formData.get('code') as string;
-  const id_token = formData.get('id_token') as string;
-  const state = formData.get('state') as string;
-  const appleUserData = formData.get('user');
-  const appleUserName = appleUserData ? JSON.parse(appleUserData as string).name : null;
-
-  // Verify id_token and extract user info
-  // Note: You'll need to implement proper JWT verification for the id_token
-  const appleUserInfo = JSON.parse(Buffer.from(id_token.split('.')[1], 'base64').toString()) as AppleUser;
-
-  // Find or create user
-  const { DB } = c.env;
-  const existingUser = await DB.prepare(
-    'SELECT * FROM users WHERE auth_provider = ? AND auth_provider_id = ?'
-  ).bind('apple', appleUserInfo.sub).first() as User | null;
-
-  const user: User = existingUser || {
-    id: nanoid(),
-    email: appleUserInfo.email,
-    name: appleUserName,
-    auth_provider: 'apple',
-    auth_provider_id: appleUserInfo.sub,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-
-  if (!existingUser) {
-    // Create new user
-    await DB.prepare(`
-      INSERT INTO users (id, email, name, auth_provider, auth_provider_id)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(
-      user.id,
-      user.email,
-      user.name,
-      user.auth_provider,
-      user.auth_provider_id
-    ).run();
-  }
-
-  // Generate JWT and set cookie
-  const token = await generateToken(user);
-  setAuthCookie(c, token);
-  return c.redirect('/onboarding/welcome');
+  return c.redirect('/onboarding/family');
 });
 
 // Logout endpoint
