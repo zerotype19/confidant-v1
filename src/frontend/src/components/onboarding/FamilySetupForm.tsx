@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import OnboardingProgress from './OnboardingProgress';
 
+// API URL is configured via VITE_API_URL environment variable in Cloudflare Pages
 const familySchema = z.object({
   name: z.string().min(1, 'Family name is required'),
 });
@@ -29,21 +30,26 @@ export default function ParentSetupForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/onboarding/family', {
+      console.log('Making request to:', `${import.meta.env.VITE_API_URL}/api/onboarding/family`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/onboarding/family`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create family');
+        const errorData = await response.json().catch(() => ({ error: `HTTP error! status: ${response.status}` }));
+        throw new Error(errorData.error || `Failed to create family (${response.status})`);
       }
 
-      navigate('/onboarding/child-profile');
+      const result = await response.json();
+      console.log('Family created:', result);
+      navigate('/onboarding/child');
     } catch (error) {
+      console.error('Error creating family:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
