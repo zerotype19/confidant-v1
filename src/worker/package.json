@@ -1,0 +1,22 @@
+{
+  "name": "confidant-worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.1.11",
+    "hono": "^3.12.6",
+    "lucia": "^2.7.7",
+    "oslo": "^0.17.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250321.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.28.1"
+  }
+}

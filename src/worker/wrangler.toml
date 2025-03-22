@@ -1,0 +1,28 @@
+name = "confidant-api"
+main = "index.ts"
+compatibility_date = "2024-02-20"
+
+[vars]
+ENVIRONMENT = "development"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "confidant-db"
+database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
+
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "confidant-storage"
+preview_bucket_name = "confidant-storage-development"
+
+[env.production]
+name = "confidant-api"
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+name = "confidant-api-staging"
+vars = { ENVIRONMENT = "staging" }
+
+[env.development]
+name = "confidant-api-development"
+vars = { ENVIRONMENT = "development" } 
