@@ -8,23 +8,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'src/api/index.ts'),
+        main: resolve(__dirname, 'index.html'),
       },
       output: {
         dir: 'dist',
-        format: 'es',
       },
-      external: [
-        '@hono/oauth-providers/google',
-        'bcryptjs',
-        'jsonwebtoken',
-        'hono',
-        '@hono/zod-validator',
-        'zod',
-      ],
     },
     target: 'esnext',
-    minify: false,
+    minify: true,
   },
   resolve: {
     alias: {
