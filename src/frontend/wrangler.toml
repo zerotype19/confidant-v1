@@ -2,12 +2,11 @@ name = "confidant-web"
 compatibility_date = "2024-09-23"
 
 [build]
-command = "npm ci && npm run build"
+command = "npm install && npm run build"
 cwd = "."
 
 [site]
 bucket = "./dist"
 
 [pages]
-pages_build_output_dir = "dist"
-build_command = "npm ci && npm run build" 
+pages_build_output_dir = "dist" 

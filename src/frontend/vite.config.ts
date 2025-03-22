@@ -8,10 +8,14 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8787',
+        target: 'https://confidant-api.kevin-mcgovern.workers.dev',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        secure: false,
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true
   }
 }) 
