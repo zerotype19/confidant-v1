@@ -12,7 +12,6 @@ import { ImageUpload } from './ImageUpload';
 const addChildSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   age: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
-  avatarUrl: z.string().url('Invalid avatar URL').optional().or(z.literal(''))
 });
 
 type AddChildFormData = z.infer<typeof addChildSchema>;
@@ -23,6 +22,7 @@ interface AddChildFormProps {
 
 export function AddChildForm({ onSuccess }: AddChildFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>();
   const { toast } = useToast();
   const {
     register,
@@ -39,7 +39,10 @@ export function AddChildForm({ onSuccess }: AddChildFormProps) {
       const response = await fetch('/api/children', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          ...data,
+          avatar_url: avatarUrl
+        })
       });
 
       if (!response.ok) {
@@ -53,6 +56,7 @@ export function AddChildForm({ onSuccess }: AddChildFormProps) {
       });
 
       reset();
+      setAvatarUrl(undefined);
       onSuccess?.();
     } catch (error) {
       toast({
@@ -72,6 +76,21 @@ export function AddChildForm({ onSuccess }: AddChildFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="avatar">Avatar (optional)</Label>
+            <ImageUpload
+              currentImage={avatarUrl}
+              onUploadComplete={setAvatarUrl}
+              onError={(error) => {
+                toast({
+                  title: 'Error',
+                  description: error,
+                  variant: 'destructive'
+                });
+              }}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
@@ -96,19 +115,6 @@ export function AddChildForm({ onSuccess }: AddChildFormProps) {
             />
             {errors.age && (
               <p className="text-sm text-red-500">{errors.age.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="avatarUrl">Avatar URL (optional)</Label>
-            <Input
-              id="avatarUrl"
-              {...register('avatarUrl')}
-              placeholder="Enter avatar URL"
-              disabled={isLoading}
-            />
-            {errors.avatarUrl && (
-              <p className="text-sm text-red-500">{errors.avatarUrl.message}</p>
             )}
           </div>
 
