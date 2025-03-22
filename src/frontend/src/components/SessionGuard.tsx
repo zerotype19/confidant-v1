@@ -13,16 +13,23 @@ export default function SessionGuard({ children }: SessionGuardProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Validate session using the auth cookie
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/validate`, {
-          credentials: 'include' // This is important for sending cookies
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
         });
 
         if (!response.ok) {
           throw new Error('Invalid session');
         }
 
-        setIsAuthenticated(true);
+        const data = await response.json();
+        if (data.success) {
+          setIsAuthenticated(true);
+        } else {
+          throw new Error('Invalid session');
+        }
       } catch (err) {
         console.error('Auth error:', err);
         setIsAuthenticated(false);
