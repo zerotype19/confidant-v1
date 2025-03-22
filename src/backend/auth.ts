@@ -10,15 +10,37 @@ interface UserClaims {
   auth_provider_id: string;
 }
 
-export function getClaims(c: Context): UserClaims {
+interface Env {
+  JWT_SECRET: string;
+}
+
+interface ContextWithClaims extends Context<{ Bindings: Env }> {
+  set(key: 'claims', value: UserClaims): void;
+  get(key: 'claims'): UserClaims;
+}
+
+function isUserClaims(payload: unknown): payload is UserClaims {
+  if (!payload || typeof payload !== 'object') return false;
+  const p = payload as Record<string, unknown>;
+  
+  return (
+    typeof p.sub === 'string' &&
+    typeof p.email === 'string' &&
+    typeof p.auth_provider === 'string' &&
+    typeof p.auth_provider_id === 'string' &&
+    (p.name === undefined || typeof p.name === 'string')
+  );
+}
+
+export function getClaims(c: ContextWithClaims): UserClaims {
   const claims = c.get('claims');
   if (!claims) {
     throw new Error('No claims found in context');
   }
-  return claims as UserClaims;
+  return claims;
 }
 
-export const verifySession = async (c: Context, next: () => Promise<void>) => {
+export const verifySession = async (c: ContextWithClaims, next: () => Promise<void>) => {
   const authToken = getCookie(c, 'auth_token');
   
   if (!authToken) {
@@ -27,8 +49,13 @@ export const verifySession = async (c: Context, next: () => Promise<void>) => {
 
   try {
     // Verify the JWT token
-    const claims = await verify(authToken, 'your-jwt-secret');
-    c.set('claims', claims);
+    const payload = await verify(authToken, c.env.JWT_SECRET);
+    
+    if (!isUserClaims(payload)) {
+      throw new Error('Invalid token payload');
+    }
+    
+    c.set('claims', payload);
     await next();
   } catch (error) {
     console.error('Session verification error:', error);
