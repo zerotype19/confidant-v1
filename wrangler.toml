@@ -11,6 +11,12 @@ bucket = "src/frontend/dist"
 [pages]
 pages_build_output_dir = "src/frontend/dist"
 
+[env]
+NODE_VERSION = "18.19.0"
+NPM_VERSION = "9.6.7"
+VITE_API_URL = "https://confidant-api-development.kevin-mcgovern.workers.dev"
+VITE_CLOUDFLARE_ACCOUNT_ID = "315111a87fcb293ac0e"
+
 # API Configuration
 [env.api]
 name = "confidant-api"
