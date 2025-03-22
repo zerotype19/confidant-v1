@@ -10,8 +10,6 @@
   "dependencies": {
     "@hono/oauth-providers": "^0.7.0",
     "@hono/zod-validator": "^0.1.11",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.9",
     "bcryptjs": "^3.0.2",
     "hono": "^3.12.6",
     "jsonwebtoken": "^9.0.2",
@@ -19,6 +17,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250321.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.9",
     "typescript": "^5.3.3",
     "wrangler": "^3.28.1"
   }

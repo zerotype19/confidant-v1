@@ -24,6 +24,15 @@ const signInSchema = z.object({
 type SignUpBody = z.infer<typeof signUpSchema>
 type SignInBody = z.infer<typeof signInSchema>
 
+interface User {
+  id: string
+  email: string
+  password_hash: string
+  name: string
+  auth_provider?: string
+  auth_provider_id?: string
+}
+
 // Initialize Google OAuth client
 const initGoogleAuth = (c: Context<Env>) => googleAuth({
   client_id: c.env.GOOGLE_CLIENT_ID,
@@ -68,7 +77,7 @@ auth.post("/signup", zValidator("json", signUpSchema), async (c: Context<Env>) =
   const existingUser = await db
     .prepare("SELECT * FROM users WHERE email = ?")
     .bind(email)
-    .first()
+    .first<User>()
 
   if (existingUser) {
     throw new HTTPException(400, { message: "Email already registered" })
@@ -120,7 +129,7 @@ auth.post("/signin", zValidator("json", signInSchema), async (c: Context<Env>) =
   const user = await db
     .prepare("SELECT * FROM users WHERE email = ?")
     .bind(email)
-    .first<{ id: string; password_hash: string }>()
+    .first<User>()
 
   if (!user) {
     throw new HTTPException(400, { message: "Invalid email or password" })
@@ -163,7 +172,7 @@ auth.get("/google/callback", async (c: Context<Env>) => {
   let user = await db
     .prepare("SELECT * FROM users WHERE email = ?")
     .bind(userInfo.email)
-    .first<{ id: string; email: string; name: string }>()
+    .first<User>()
 
   if (!user) {
     // Create new user
@@ -196,6 +205,7 @@ auth.get("/google/callback", async (c: Context<Env>) => {
       id: userId,
       email: userInfo.email,
       name: userInfo.name,
+      password_hash: '', // Required by the User interface but not used for Google auth
     }
   }
 
@@ -216,7 +226,7 @@ auth.post("/signout", async (c: Context<Env>) => {
   }
 
   try {
-    const payload = await verifyJWT(token)
+    await verifyJWT(token)
     return c.json({ success: true })
   } catch (error) {
     throw new HTTPException(401, { message: "Invalid token" })

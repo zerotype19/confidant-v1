@@ -5,6 +5,16 @@ import { Env } from "../types"
 
 const JWT_SECRET = "your-secret-key" // TODO: Move to environment variable
 
+interface Session {
+  user_id: string
+  email: string
+  name: string | null
+}
+
+interface JWTPayload {
+  userId: string
+}
+
 export interface AuthContext extends Context<Env> {
   user: {
     id: string
@@ -20,7 +30,7 @@ export async function authMiddleware(c: Context<Env>, next: Next) {
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { userId: string }
+    const payload = jwt.verify(token, JWT_SECRET) as JWTPayload
     const db = c.env.DB
 
     const session = await db
@@ -28,7 +38,7 @@ export async function authMiddleware(c: Context<Env>, next: Next) {
         "SELECT s.*, u.id as user_id, u.email, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > datetime('now')"
       )
       .bind(payload.userId)
-      .first()
+      .first<Session>()
 
     if (!session) {
       throw new HTTPException(401, { message: "Session expired" })
