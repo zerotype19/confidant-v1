@@ -9,4 +9,5 @@ cwd = "."
 bucket = "./dist"
 
 [pages]
-pages_build_output_dir = "dist" 
+pages_build_output_dir = "dist"
+build_command = "npm ci && npm run build" 
