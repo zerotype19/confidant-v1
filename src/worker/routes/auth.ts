@@ -27,7 +27,7 @@ type SignInBody = z.infer<typeof signInSchema>
 // Initialize Google OAuth client
 const initGoogleAuth = (c: Context<Env>) => googleAuth({
   client_id: c.env.GOOGLE_CLIENT_ID,
-  client_secret: c.env.GOOGLE_CLIENT_SECRET,
+  client_secret: c.env.GOOGLE_OAUTH_CLIENT_SECRET,
   redirect_uri: `${c.env.API_URL}/api/auth/google/callback`,
   scope: ["email", "profile"],
 })
