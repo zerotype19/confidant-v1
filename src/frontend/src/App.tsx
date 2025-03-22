@@ -7,6 +7,9 @@ import SignUp from './pages/SignUp'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
+import OnboardingWelcome from './components/onboarding/OnboardingWelcome'
+import ParentSetupForm from './components/onboarding/ParentSetupForm'
+import ChildProfileForm from './components/onboarding/ChildProfileForm'
 
 export default function App() {
   return (
@@ -29,6 +32,25 @@ export default function App() {
         }>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="profile" element={<Profile />} />
+        </Route>
+
+        {/* Onboarding routes */}
+        <Route path="/onboarding">
+          <Route path="welcome" element={
+            <SessionGuard>
+              <OnboardingWelcome />
+            </SessionGuard>
+          } />
+          <Route path="parent-setup" element={
+            <SessionGuard>
+              <ParentSetupForm />
+            </SessionGuard>
+          } />
+          <Route path="child-profile" element={
+            <SessionGuard>
+              <ChildProfileForm />
+            </SessionGuard>
+          } />
         </Route>
 
         {/* 404 route */}
