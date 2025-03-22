@@ -8,11 +8,6 @@ ENVIRONMENT = "production"
 API_URL = "https://confidant-api.kevin-mcgovern.workers.dev"
 FRONTEND_URL = "https://confidant-web.pages.dev"
 
-# These variables should be set using `wrangler secret put` and will not be overwritten on deploy
-[secrets]
-GOOGLE_CLIENT_ID
-GOOGLE_CLIENT_SECRET
-
 # D1 Database Configuration
 [[d1_databases]]
 binding = "DB"
