@@ -8,9 +8,9 @@ import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import OnboardingWelcome from './components/onboarding/OnboardingWelcome'
-import ParentSetupForm from './components/onboarding/ParentSetupForm'
+import FamilySetupForm from './components/onboarding/FamilySetupForm'
 import ChildProfileForm from './components/onboarding/ChildProfileForm'
-import { Toaster } from '@/components/ui/toaster'
+import { Toaster } from './components/ui/toaster'
 
 export default function App() {
   return (
@@ -43,12 +43,12 @@ export default function App() {
                 <OnboardingWelcome />
               </SessionGuard>
             } />
-            <Route path="parent-setup" element={
+            <Route path="family" element={
               <SessionGuard>
-                <ParentSetupForm />
+                <FamilySetupForm />
               </SessionGuard>
             } />
-            <Route path="child-profile" element={
+            <Route path="child" element={
               <SessionGuard>
                 <ChildProfileForm />
               </SessionGuard>
