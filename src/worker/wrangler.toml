@@ -7,11 +7,13 @@ compatibility_flags = ["nodejs_compat"]
 ENVIRONMENT = "development"
 API_URL = "https://api.confidant.dev"
 FRONTEND_URL = "https://confidant.dev"
+GOOGLE_CLIENT_ID = "your-client-id"
+GOOGLE_CLIENT_SECRET = "your-client-secret"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "confidant-db"
-database_id = "confidant-db"
+database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
 
 [[r2_buckets]]
 binding = "STORAGE"

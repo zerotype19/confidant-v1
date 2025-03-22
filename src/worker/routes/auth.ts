@@ -25,10 +25,10 @@ type SignUpBody = z.infer<typeof signUpSchema>
 type SignInBody = z.infer<typeof signInSchema>
 
 // Initialize Google OAuth client
-const google = googleAuth({
-  client_id: process.env.GOOGLE_CLIENT_ID!,
-  client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-  redirect_uri: `${process.env.API_URL}/api/auth/google/callback`,
+const initGoogleAuth = (c: Context<Env>) => googleAuth({
+  client_id: c.env.GOOGLE_CLIENT_ID,
+  client_secret: c.env.GOOGLE_CLIENT_SECRET,
+  redirect_uri: `${c.env.API_URL}/api/auth/google/callback`,
   scope: ["email", "profile"],
 })
 
@@ -141,6 +141,7 @@ auth.post("/signin", zValidator("json", signInSchema), async (c: Context<Env>) =
 
 // Google OAuth login
 auth.get("/google", async (c: Context<Env>) => {
+  const google = initGoogleAuth(c)
   const authUrl = await google.getAuthorizationUrl(c)
   return c.redirect(authUrl)
 })
@@ -152,6 +153,7 @@ auth.get("/google/callback", async (c: Context<Env>) => {
     throw new HTTPException(400, { message: "Missing authorization code" })
   }
 
+  const google = initGoogleAuth(c)
   const oauth = await google.getAccessToken(c, code)
   const userInfo = await google.getUserInfo(oauth.accessToken)
 
