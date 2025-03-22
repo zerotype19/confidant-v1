@@ -2,7 +2,7 @@ name = "confidant-web"
 compatibility_date = "2024-09-23"
 
 [build]
-command = "yarn install && yarn build"
+command = "npm install && npm run build"
 cwd = "."
 
 [site]
