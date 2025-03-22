@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
 import { getClaims, verifySession } from '../auth';
 import { z } from 'zod';
+import { D1Database, User, Family, FamilyMember, Child } from '../types';
 
 const onboardingRouter = new Hono();
 
@@ -11,14 +12,18 @@ const FamilySchema = z.object({
 
 const ChildSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  age: z.number().min(0, 'Age must be a positive number'),
+  age: z.number().min(0, 'Age must be a positive number').optional(),
   avatarUrl: z.string().optional(),
 });
+
+interface Bindings {
+  db: D1Database;
+}
 
 // Create family and add user as guardian
 onboardingRouter.post('/family', verifySession(), async (c) => {
   const claims = getClaims(c);
-  const { db } = c.env;
+  const { db } = c.env as Bindings;
   const body = await c.req.json();
 
   try {
@@ -28,6 +33,25 @@ onboardingRouter.post('/family', verifySession(), async (c) => {
     await db.prepare('BEGIN TRANSACTION').run();
 
     try {
+      // Ensure user exists in database
+      const userResult = await db.prepare(`
+        SELECT id FROM users WHERE id = ?
+      `).bind(claims.sub).first<Pick<User, 'id'>>();
+
+      if (!userResult) {
+        // Create user if they don't exist
+        await db.prepare(`
+          INSERT INTO users (id, email, name, auth_provider, auth_provider_id)
+          VALUES (?, ?, ?, ?, ?)
+        `).bind(
+          claims.sub,
+          claims.email,
+          claims.name || null,
+          claims.auth_provider,
+          claims.auth_provider_id
+        ).run();
+      }
+
       // Create family
       const familyId = nanoid();
       await db.prepare(`
@@ -45,8 +69,8 @@ onboardingRouter.post('/family', verifySession(), async (c) => {
       // Create free subscription
       const subscriptionId = nanoid();
       await db.prepare(`
-        INSERT INTO subscriptions (id, family_id, status)
-        VALUES (?, ?, 'free')
+        INSERT INTO subscriptions (id, family_id, stripe_customer_id, stripe_subscription_id, status)
+        VALUES (?, ?, NULL, NULL, 'free')
       `).bind(subscriptionId, familyId).run();
 
       await db.prepare('COMMIT').run();
@@ -66,7 +90,7 @@ onboardingRouter.post('/family', verifySession(), async (c) => {
 // Add child to family
 onboardingRouter.post('/child', verifySession(), async (c) => {
   const claims = getClaims(c);
-  const { db } = c.env;
+  const { db } = c.env as Bindings;
   const body = await c.req.json();
 
   try {
@@ -76,7 +100,7 @@ onboardingRouter.post('/child', verifySession(), async (c) => {
     const familyMember = await db.prepare(`
       SELECT family_id FROM family_members 
       WHERE user_id = ? AND role = 'guardian'
-    `).bind(claims.sub).first();
+    `).bind(claims.sub).first<Pick<FamilyMember, 'family_id'>>();
 
     if (!familyMember) {
       return c.json({ error: 'Family not found' }, 404);
@@ -91,7 +115,7 @@ onboardingRouter.post('/child', verifySession(), async (c) => {
       childId,
       familyMember.family_id,
       data.name,
-      data.age,
+      data.age || null,
       data.avatarUrl || null
     ).run();
 
@@ -110,26 +134,28 @@ onboardingRouter.post('/child', verifySession(), async (c) => {
 // Get family details
 onboardingRouter.get('/family', verifySession(), async (c) => {
   const claims = getClaims(c);
-  const { db } = c.env;
+  const { db } = c.env as Bindings;
 
   // Get user's family and children
-  const familyMember = await db.prepare(`
-    SELECT f.* FROM families f
+  const family = await db.prepare(`
+    SELECT f.id, f.name, f.created_at 
+    FROM families f
     JOIN family_members fm ON fm.family_id = f.id
     WHERE fm.user_id = ? AND fm.role = 'guardian'
-  `).bind(claims.sub).first();
+  `).bind(claims.sub).first<Family>();
 
-  if (!familyMember) {
+  if (!family) {
     return c.json({ error: 'Family not found' }, 404);
   }
 
   const children = await db.prepare(`
-    SELECT id, name, age, avatar_url FROM children
+    SELECT id, name, age, avatar_url, created_at, updated_at 
+    FROM children
     WHERE family_id = ?
-  `).bind(familyMember.id).all();
+  `).bind(family.id).all<Child>();
 
   return c.json({
-    family: familyMember,
+    family,
     children
   });
 });

@@ -5,6 +5,8 @@ interface UserClaims {
   sub: string;
   email: string;
   name?: string;
+  auth_provider: string;
+  auth_provider_id: string;
 }
 
 export function getClaims(c: Context): UserClaims {

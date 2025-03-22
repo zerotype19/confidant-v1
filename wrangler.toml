@@ -19,6 +19,12 @@ compatibility_flags = ["nodejs_compat"]
 [env.api.vars]
 ENVIRONMENT = "development"
 
+# D1 Database Configuration
+[[env.api.d1_databases]]
+binding = "DB"
+database_name = "confidant-db"
+database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
+
 [env.api.production]
 vars = { ENVIRONMENT = "production" }
 
@@ -26,10 +32,6 @@ vars = { ENVIRONMENT = "production" }
 binding = "DB"
 database_name = "confidant-db"
 database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
-
-[[env.api.production.r2_buckets]]
-binding = "STORAGE"
-bucket_name = "confidant-storage"
 
 [env.api.staging]
 vars = { ENVIRONMENT = "staging" }
@@ -39,10 +41,6 @@ binding = "DB"
 database_name = "confidant-db"
 database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
 
-[[env.api.staging.r2_buckets]]
-binding = "STORAGE"
-bucket_name = "confidant-storage"
-
 [env.api.development]
 vars = { ENVIRONMENT = "development" }
 
@@ -50,6 +48,14 @@ vars = { ENVIRONMENT = "development" }
 binding = "DB"
 database_name = "confidant-db"
 database_id = "c3aec830-dd14-4cc6-a733-ac25cf7e3628"
+
+[[env.api.production.r2_buckets]]
+binding = "STORAGE"
+bucket_name = "confidant-storage"
+
+[[env.api.staging.r2_buckets]]
+binding = "STORAGE"
+bucket_name = "confidant-storage"
 
 [[env.api.development.r2_buckets]]
 binding = "STORAGE"

@@ -1,10 +1,22 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { verifySession } from './auth';
+import authRouter from './api/auth';
 import onboardingRouter from './api/onboarding';
+import childrenRouter from './api/children';
 
 const app = new Hono();
 
-// API routes
+// Enable CORS
+app.use('*', cors());
+
+// Public routes
+app.route('/api/auth', authRouter);
+
+// Protected routes
+app.use('/api/*', verifySession);
 app.route('/api/onboarding', onboardingRouter);
+app.route('/api/children', childrenRouter);
 
 // Default route for SPA
 app.get('*', (c) => {
