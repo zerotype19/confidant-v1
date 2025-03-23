@@ -1,4 +1,16 @@
 import { useState } from 'react';
+import {
+  Box,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Text,
+  VStack,
+  HStack,
+} from '@chakra-ui/react';
+import { ChevronDownIcon } from '@chakra-ui/icons';
 import { Child } from '../../types/child';
 
 interface ChildSwitcherProps {
@@ -8,60 +20,52 @@ interface ChildSwitcherProps {
 }
 
 export function ChildSwitcher({ children = [], selectedChildId, onChildSelect }: ChildSwitcherProps) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const selectedChild = Array.isArray(children) ? children.find(child => child.id === selectedChildId) : null;
 
   return (
-    <div className="relative">
-      <div className="flex items-center space-x-4">
+    <Box>
+      <HStack spacing={4}>
         {/* Avatar/Emoji */}
-        <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-          <span className="text-2xl">👶</span>
-        </div>
+        <Box
+          w="48px"
+          h="48px"
+          borderRadius="full"
+          bg="primary.100"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Text fontSize="2xl">👶</Text>
+        </Box>
         
         {/* Name and Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center space-x-2 text-lg font-medium text-gray-900 hover:text-primary-600"
+        <Menu>
+          <MenuButton
+            as={Button}
+            rightIcon={<ChevronDownIcon />}
+            variant="ghost"
+            size="lg"
+            fontWeight="medium"
+            color="gray.900"
+            _hover={{ color: 'primary.600' }}
           >
-            <span>{selectedChild?.name || 'Select Child'}</span>
-            <svg
-              className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {/* Dropdown Menu */}
-          {isDropdownOpen && Array.isArray(children) && (
-            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-              <div className="py-1" role="menu">
-                {children.map((child) => (
-                  <button
-                    key={child.id}
-                    onClick={() => {
-                      onChildSelect(child.id);
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-2 text-sm ${
-                      child.id === selectedChildId
-                        ? 'bg-primary-50 text-primary-900'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                    role="menuitem"
-                  >
-                    {child.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+            {selectedChild?.name || 'Select Child'}
+          </MenuButton>
+          <MenuList>
+            {Array.isArray(children) && children.map((child) => (
+              <MenuItem
+                key={child.id}
+                onClick={() => onChildSelect(child.id)}
+                bg={child.id === selectedChildId ? 'primary.50' : 'transparent'}
+                color={child.id === selectedChildId ? 'primary.900' : 'gray.700'}
+                _hover={{ bg: 'gray.50' }}
+              >
+                {child.name}
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+      </HStack>
+    </Box>
   );
 } 
