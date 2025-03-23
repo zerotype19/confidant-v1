@@ -55,13 +55,15 @@ export function ChildProvider({ children }: ChildProviderProps) {
         const response = await apiRequest('/children');
         console.log('ChildContext: Children response:', response);
         if (isMounted) {
-          setChildList(response);
-          console.log('ChildContext: Updated childList with:', response);
+          // Extract children from the results array
+          const children = response.results || [];
+          setChildList(children);
+          console.log('ChildContext: Updated childList with:', children);
           
           // Auto-select child if there's only one
-          if (response.length === 1 && !selectedChild) {
-            console.log('ChildContext: Auto-selecting single child:', response[0]);
-            setSelectedChild(response[0]);
+          if (children.length === 1 && !selectedChild) {
+            console.log('ChildContext: Auto-selecting single child:', children[0]);
+            setSelectedChild(children[0]);
           }
         }
       } catch (err) {
