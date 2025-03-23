@@ -37,6 +37,8 @@ export function ChildProvider({ children }: ChildProviderProps) {
 
   // Fetch children list
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchChildren() {
       try {
         const response = await apiRequest('/children');
@@ -44,31 +46,44 @@ export function ChildProvider({ children }: ChildProviderProps) {
           throw new Error(response.error || 'Failed to fetch children');
         }
         
-        const children = response.results;
-        setChildList(children);
-        
-        // Auto-select child if there's only one
-        if (children.length === 1 && !selectedChild) {
-          setSelectedChild(children[0]);
+        if (isMounted) {
+          const children = response.results;
+          setChildList(children);
+          
+          // Auto-select child if there's only one
+          if (children.length === 1 && !selectedChild) {
+            setSelectedChild(children[0]);
+          }
         }
-        
-        setIsLoading(false);
       } catch (err) {
         console.error('Error fetching children:', err);
-        setError(err instanceof Error ? err : new Error('An error occurred'));
-        setIsLoading(false);
+        if (isMounted) {
+          setError(err instanceof Error ? err : new Error('An error occurred'));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchChildren();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Fetch challenges when child is selected
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchChallenges() {
       if (!selectedChild) {
-        setChallenges([]);
-        setTodaysChallenge(null);
+        if (isMounted) {
+          setChallenges([]);
+          setTodaysChallenge(null);
+        }
         return;
       }
 
@@ -86,17 +101,27 @@ export function ChildProvider({ children }: ChildProviderProps) {
           throw new Error(todaysChallengeData.error || 'Failed to fetch today\'s challenge');
         }
 
-        setChallenges(challengesData.results);
-        setTodaysChallenge(todaysChallengeData.results);
-        setIsLoading(false);
+        if (isMounted) {
+          setChallenges(challengesData.results);
+          setTodaysChallenge(todaysChallengeData.results);
+        }
       } catch (err) {
         console.error('Error fetching challenges:', err);
-        setError(err instanceof Error ? err : new Error('An error occurred'));
-        setIsLoading(false);
+        if (isMounted) {
+          setError(err instanceof Error ? err : new Error('An error occurred'));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchChallenges();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedChild]);
 
   const completeChallenge = async (data: { reflection?: string; moodRating?: number }) => {
