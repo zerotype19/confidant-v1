@@ -14,13 +14,19 @@ export default function SessionGuard({ children }: SessionGuardProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('Checking authentication...');
+      console.log('SessionGuard: Starting authentication check...');
+      console.log('SessionGuard: API URL:', import.meta.env.VITE_API_URL);
       try {
+        console.log('SessionGuard: Making request to /auth/validate');
         const response = await apiRequest('/auth/validate');
-        console.log('Auth validation response:', response);
+        console.log('SessionGuard: Auth validation response:', response);
         setIsAuthenticated(true);
       } catch (err) {
-        console.error('Auth error:', err);
+        console.error('SessionGuard: Authentication error:', err);
+        console.error('SessionGuard: Error details:', {
+          message: err instanceof Error ? err.message : 'Unknown error',
+          stack: err instanceof Error ? err.stack : undefined
+        });
         setIsAuthenticated(false);
         navigate('/signin', { state: { from: location.pathname } });
       }
@@ -30,7 +36,7 @@ export default function SessionGuard({ children }: SessionGuardProps) {
   }, [navigate, location]);
 
   if (isAuthenticated === null) {
-    // Show loading state while checking authentication
+    console.log('SessionGuard: Showing loading state');
     return (
       <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
         <Spinner size="xl" color="primary.600" thickness="4px" />
@@ -38,5 +44,6 @@ export default function SessionGuard({ children }: SessionGuardProps) {
     );
   }
 
+  console.log('SessionGuard: Authentication state:', isAuthenticated);
   return isAuthenticated ? <>{children}</> : null;
 } 

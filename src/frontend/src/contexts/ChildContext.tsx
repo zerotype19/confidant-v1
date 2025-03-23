@@ -48,26 +48,35 @@ export function ChildProvider({ children }: ChildProviderProps) {
     let isMounted = true;
 
     async function fetchChildren() {
-      console.log('Fetching children...');
+      console.log('ChildContext: Starting to fetch children...');
+      console.log('ChildContext: API URL:', import.meta.env.VITE_API_URL);
       try {
+        console.log('ChildContext: Making request to /children');
         const response = await apiRequest('/children');
-        console.log('Children response:', response);
+        console.log('ChildContext: Children response:', response);
         if (isMounted) {
           setChildList(response);
+          console.log('ChildContext: Updated childList with:', response);
           
           // Auto-select child if there's only one
           if (response.length === 1 && !selectedChild) {
+            console.log('ChildContext: Auto-selecting single child:', response[0]);
             setSelectedChild(response[0]);
           }
         }
       } catch (err) {
-        console.error('Error fetching children:', err);
+        console.error('ChildContext: Error fetching children:', err);
+        console.error('ChildContext: Error details:', {
+          message: err instanceof Error ? err.message : 'Unknown error',
+          stack: err instanceof Error ? err.stack : undefined
+        });
         if (isMounted) {
           setError(err instanceof Error ? err : new Error('An error occurred'));
         }
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          console.log('ChildContext: Finished loading children');
         }
       }
     }
@@ -76,6 +85,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
 
     return () => {
       isMounted = false;
+      console.log('ChildContext: Cleanup - unmounted');
     };
   }, []);
 
