@@ -115,13 +115,16 @@ export function ChildProvider({ children }: ChildProviderProps) {
         console.log('Today\'s challenge response:', todaysChallengeData);
 
         if (isMounted) {
-          // Handle the nested challenge structure
+          // Handle the nested challenge structure for today's challenge
           const todayChallenge = todaysChallengeData.challenge ? {
             ...todaysChallengeData.challenge,
-            completed: todaysChallengeData.completed
+            completed: todaysChallengeData.completed,
+            completed_at: null // Add this to match the ChallengeWithStatus type
           } : null;
           
-          setChallenges(challengesData.results || []);
+          // Handle the nested challenges list structure
+          const challengesList = challengesData.results || [];
+          setChallenges(challengesList);
           setTodaysChallenge(todayChallenge);
         }
       } catch (err) {
