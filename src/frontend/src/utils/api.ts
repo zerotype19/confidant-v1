@@ -1,3 +1,5 @@
+import { API_URL } from '../config';
+
 interface ApiOptions {
   method?: string;
   body?: any;
@@ -9,7 +11,7 @@ export async function apiRequest(endpoint: string, options: ApiOptions = {}) {
 
   // Add /api prefix to all endpoints
   const path = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
-  const url = `${import.meta.env.VITE_API_URL}${path}`;
+  const url = `${API_URL}${path}`;
 
   console.log('API Request:', {
     url,
