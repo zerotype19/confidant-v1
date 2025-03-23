@@ -43,6 +43,8 @@ challengesRouter.get('/today', verifySession, async (c) => {
     const { DB } = c.env;
     const childId = c.req.query('child_id');
 
+    console.log('Getting challenge for child:', childId);
+
     if (!childId) {
       return c.json({ challenge: null, completed: false });
     }
@@ -55,8 +57,11 @@ challengesRouter.get('/today', verifySession, async (c) => {
     `).bind(childId, claims.sub).first<Child>();
 
     if (!child) {
+      console.log('Child not found:', childId);
       return c.json({ error: 'Child not found' }, 404);
     }
+
+    console.log('Found child:', child);
 
     // Check if there's already a completed challenge for today
     const today = new Date().toISOString().split('T')[0];
@@ -68,6 +73,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
     `).bind(childId, today).first<{ challenge_id: string }>();
 
     if (completedToday) {
+      console.log('Found completed challenge for today:', completedToday);
       // Return the completed challenge
       const challenge = await DB.prepare(`
         SELECT * FROM challenges WHERE id = ?
@@ -88,6 +94,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
     `).bind(childId).all<{ challenge_id: string }>();
 
     const recentChallengeIds = recentChallenges.results?.map(c => c.challenge_id) || [];
+    console.log('Recent challenge IDs:', recentChallengeIds);
 
     // Get pillar usage counts for this child
     const pillarUsage = await DB.prepare(`
@@ -99,6 +106,8 @@ challengesRouter.get('/today', verifySession, async (c) => {
       ORDER BY count ASC
     `).bind(childId).all<{ pillar_id: number; count: number }>();
 
+    console.log('Pillar usage:', pillarUsage.results);
+
     // Create a map of pillar usage
     const pillarUsageMap = pillarUsage.results?.reduce((acc, { pillar_id, count }) => {
       acc[pillar_id] = count;
@@ -107,13 +116,14 @@ challengesRouter.get('/today', verifySession, async (c) => {
 
     // Find the least used pillar
     const leastUsedPillar = pillarUsage.results?.[0]?.pillar_id || 1;
+    console.log('Least used pillar:', leastUsedPillar);
 
     // Get a challenge that:
     // 1. Matches the child's age range
     // 2. Hasn't been completed in the last 7 days
     // 3. Is from the least used pillar
     // 4. Is randomly selected from matching challenges
-    const challenge = await DB.prepare(`
+    const challengeQuery = `
       WITH matching_challenges AS (
         SELECT * FROM challenges 
         WHERE age_range LIKE ? 
@@ -123,28 +133,44 @@ challengesRouter.get('/today', verifySession, async (c) => {
       SELECT * FROM matching_challenges
       ORDER BY RANDOM()
       LIMIT 1
-    `).bind(`%${child.age}%`, leastUsedPillar, ...recentChallengeIds).first<Challenge>();
+    `;
+    console.log('Challenge query:', challengeQuery);
+    console.log('Query params:', [`%${child.age}%`, leastUsedPillar, ...recentChallengeIds]);
+
+    const challenge = await DB.prepare(challengeQuery)
+      .bind(`%${child.age}%`, leastUsedPillar, ...recentChallengeIds)
+      .first<Challenge>();
 
     if (!challenge) {
+      console.log('No challenge found with least used pillar, trying fallback');
       // If no challenge found with the least used pillar, try any age-appropriate challenge
-      const fallbackChallenge = await DB.prepare(`
+      const fallbackQuery = `
         SELECT * FROM challenges 
         WHERE age_range LIKE ? 
         ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
         ORDER BY RANDOM() 
         LIMIT 1
-      `).bind(`%${child.age}%`, ...recentChallengeIds).first<Challenge>();
+      `;
+      console.log('Fallback query:', fallbackQuery);
+      console.log('Fallback params:', [`%${child.age}%`, ...recentChallengeIds]);
+
+      const fallbackChallenge = await DB.prepare(fallbackQuery)
+        .bind(`%${child.age}%`, ...recentChallengeIds)
+        .first<Challenge>();
 
       if (!fallbackChallenge) {
+        console.log('No suitable challenges found');
         return c.json({ error: 'No suitable challenges found' }, 404);
       }
 
+      console.log('Found fallback challenge:', fallbackChallenge);
       return c.json({ 
         challenge: fallbackChallenge,
         completed: false 
       });
     }
 
+    console.log('Found challenge:', challenge);
     return c.json({ 
       challenge,
       completed: false 
