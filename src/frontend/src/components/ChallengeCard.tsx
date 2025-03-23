@@ -1,89 +1,83 @@
+import { useState } from 'react';
 import {
   Box,
   Button,
-  Heading,
   Text,
   VStack,
   HStack,
-  Icon,
-  useDisclosure,
-  CardBody,
-  Stack,
 } from '@chakra-ui/react';
-import { FaArrowRight } from 'react-icons/fa';
 import { CompleteChallengeModal } from './CompleteChallengeModal';
 import { ChallengeWithStatus } from '../types/challenge';
-import { useState } from 'react';
 
 interface ChallengeCardProps {
   challenge: ChallengeWithStatus;
-  onComplete: (reflection?: string, moodRating?: number) => void;
+  onComplete: (reflection?: string, moodRating?: number) => Promise<void>;
 }
 
 export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
-  const disclosure = useDisclosure({ defaultOpen: false });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting] = useState(false);
+
+  const handleComplete = async (reflection?: string, moodRating?: number) => {
+    if (onComplete) {
+      await onComplete(reflection, moodRating);
+    }
+    setIsOpen(false);
+  };
+
   return (
-    <Box>
-      <CardBody>
-        <Stack gap={4}>
-          <HStack gap={4}>
-            <Box>
-              <VStack alignItems="start" gap={2} flex={1}>
-                <Heading size="md">{challenge.title}</Heading>
-                <Text color="gray.600">{challenge.description}</Text>
-              </VStack>
-            </Box>
-          </HStack>
+    <Box
+      borderWidth="1px"
+      borderRadius="lg"
+      overflow="hidden"
+      p={4}
+      bg="white"
+      shadow="sm"
+    >
+      <VStack align="stretch" gap={4}>
+        <Box>
+          <Text fontSize="lg" fontWeight="semibold">
+            {challenge.title}
+          </Text>
+          <Text color="gray.600">{challenge.description}</Text>
+        </Box>
 
-          <VStack alignItems="start" gap={4}>
-            <Box>
-              <VStack alignItems="start" gap={2} width="100%">
-                <Text fontWeight="bold">Pillar</Text>
-                <Text>{challenge.pillar_id}</Text>
-              </VStack>
-            </Box>
-
-            <Box>
-              <VStack alignItems="start" gap={2} width="100%">
-                <Text fontWeight="bold">Goal</Text>
-                <Text>{challenge.goal}</Text>
-              </VStack>
-            </Box>
-          </VStack>
-
-          <HStack gap={4} width="100%">
-            {!challenge.completed ? (
+        <HStack gap={2}>
+          {challenge.completed ? (
+            <>
               <Button
-                colorScheme="blue"
-                onClick={disclosure.onOpen}
+                colorScheme="green"
                 disabled={isSubmitting}
                 flex={1}
               >
-                Complete Challenge
-                <Icon as={FaArrowRight} ml={2} />
+                Completed
               </Button>
-            ) : (
               <Button
                 variant="outline"
                 colorScheme="blue"
-                onClick={disclosure.onOpen}
+                onClick={() => setIsOpen(true)}
                 flex={1}
               >
-                View Details
-                <Icon as={FaArrowRight} ml={2} />
+                View Reflection
               </Button>
-            )}
-          </HStack>
-        </Stack>
-      </CardBody>
+            </>
+          ) : (
+            <Button
+              colorScheme="blue"
+              onClick={() => setIsOpen(true)}
+              disabled={isSubmitting}
+              flex={1}
+            >
+              Complete Challenge
+            </Button>
+          )}
+        </HStack>
+      </VStack>
 
       <CompleteChallengeModal
-        isOpen={disclosure.open}
-        onClose={disclosure.onClose}
-        challenge={challenge}
-        onComplete={onComplete}
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        onComplete={handleComplete}
       />
     </Box>
   );

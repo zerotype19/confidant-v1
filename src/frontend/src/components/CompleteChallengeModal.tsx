@@ -19,15 +19,13 @@ import {
 } from '@chakra-ui/modal';
 import { createStandaloneToast } from '@chakra-ui/toast';
 import { FaSmile, FaMeh, FaFrown, FaCheck } from 'react-icons/fa';
-import { ChallengeWithStatus } from '../types/challenge';
 
 const { toast } = createStandaloneToast();
 
 interface CompleteChallengeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  challenge: ChallengeWithStatus;
-  onComplete: (reflection?: string, moodRating?: number) => void;
+  onComplete: (reflection?: string, moodRating?: number) => Promise<void>;
 }
 
 const MoodRating = {
@@ -39,7 +37,6 @@ const MoodRating = {
 export function CompleteChallengeModal({
   isOpen,
   onClose,
-  challenge,
   onComplete,
 }: CompleteChallengeModalProps) {
   const [reflection, setReflection] = useState('');

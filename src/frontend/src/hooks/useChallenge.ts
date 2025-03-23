@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { API_URL } from '../config';
-import { Challenge, CompleteChallengeInput, TodaysChallengeResponse, ChallengeWithStatus } from '../types/challenge';
+import { CompleteChallengeInput, TodaysChallengeResponse, ChallengeWithStatus } from '../types/challenge';
 
-export const useChallenge = (childId: string) => {
+export function useChallenge(childId: string) {
   const queryClient = useQueryClient();
 
   // Get today's challenge
@@ -36,15 +36,18 @@ export const useChallenge = (childId: string) => {
   });
 
   // Complete a challenge
-  const { mutate: completeChallenge, isPending: isCompleting } = useMutation({
-    mutationFn: async (data: CompleteChallengeInput) => {
-      const response = await fetch(`${API_URL}/api/challenges/complete`, {
+  const { mutateAsync: completeChallenge, isPending: isCompleting } = useMutation<
+    TodaysChallengeResponse,
+    Error,
+    CompleteChallengeInput
+  >({
+    mutationFn: async (input) => {
+      const response = await fetch(`${API_URL}/challenges/${childId}/complete`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        credentials: 'include',
-        body: JSON.stringify(data)
+        body: JSON.stringify(input),
       });
       if (!response.ok) {
         throw new Error('Failed to complete challenge');
@@ -52,10 +55,9 @@ export const useChallenge = (childId: string) => {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['todaysChallenge', childId] });
       queryClient.invalidateQueries({ queryKey: ['challenges', childId] });
-    }
+    },
   });
 
   return {
@@ -67,4 +69,4 @@ export const useChallenge = (childId: string) => {
     completeChallenge,
     isCompleting
   };
-}; 
+} 

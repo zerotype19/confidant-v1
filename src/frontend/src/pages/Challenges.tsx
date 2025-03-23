@@ -1,20 +1,16 @@
 import { useState } from 'react';
 import {
   Box,
-  Button,
   Heading,
   Text,
   VStack,
   HStack,
-  Icon,
   Input,
   InputGroup,
-  InputElement,
   SimpleGrid,
 } from '@chakra-ui/react';
 import { Select } from 'chakra-react-select';
 import { useToast } from '@chakra-ui/toast';
-import { FaSearch } from 'react-icons/fa';
 import { ChallengeCard } from '../components/ChallengeCard';
 import { ChallengeWithStatus } from '../types/challenge';
 import { useChildContext } from '../contexts/ChildContext';
