@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ChallengeWithStatus, CompleteChallengeInput } from '../types/challenge';
-import { API_URL } from '../config';
 import { apiRequest } from '../utils/api';
 
 interface Child {
