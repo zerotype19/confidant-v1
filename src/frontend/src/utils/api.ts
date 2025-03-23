@@ -1,5 +1,3 @@
-import { API_URL } from '../config';
-
 interface ApiOptions {
   method?: string;
   body?: any;
