@@ -1,17 +1,12 @@
-import { useState } from 'react';
 import {
   Box,
   Button,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   Text,
-  VStack,
   HStack,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import { Child } from '../../types/child';
+import { Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/menu';
 
 interface ChildSwitcherProps {
   children: Child[];
@@ -24,7 +19,7 @@ export function ChildSwitcher({ children = [], selectedChildId, onChildSelect }:
 
   return (
     <Box>
-      <HStack spacing={4}>
+      <HStack gap={4}>
         {/* Avatar/Emoji */}
         <Box
           w="48px"
@@ -59,6 +54,7 @@ export function ChildSwitcher({ children = [], selectedChildId, onChildSelect }:
                 bg={child.id === selectedChildId ? 'primary.50' : 'transparent'}
                 color={child.id === selectedChildId ? 'primary.900' : 'gray.700'}
                 _hover={{ bg: 'gray.50' }}
+                value={child.id}
               >
                 {child.name}
               </MenuItem>
