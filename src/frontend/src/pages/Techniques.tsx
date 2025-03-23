@@ -80,12 +80,9 @@ export function Techniques() {
         <VStack spacing={8} align="stretch">
           <Box>
             <ChildSwitcher
-              children={childList}
-              selectedChildId={selectedChild?.id || null}
-              onChildSelect={(childId) => {
-                const child = childList.find(c => c.id === childId) || null;
-                setSelectedChild(child);
-              }}
+              selectedChild={selectedChild}
+              childList={childList}
+              onChildSelect={setSelectedChild}
             />
           </Box>
 
