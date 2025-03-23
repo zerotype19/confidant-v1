@@ -4,7 +4,7 @@ import {
   FormLabel,
 } from '@chakra-ui/react';
 
-interface Child {
+export interface Child {
   id: string;
   name: string;
   age: number;
@@ -14,7 +14,7 @@ interface Child {
   avatar?: string;
 }
 
-interface ChildSwitcherProps {
+export interface ChildSwitcherProps {
   selectedChildId: string | null;
   childList: Child[];
   onChildSelect: (childId: string) => void;
