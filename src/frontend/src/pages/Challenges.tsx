@@ -25,7 +25,7 @@ export function Challenges() {
   const [selectedStatus, setSelectedStatus] = useState({ value: 'all', label: 'All Status' });
   const toast = useToast();
 
-  const { selectedChild, childList, challenges, isLoading, error, completeChallenge, setSelectedChild } = useChildContext();
+  const { selectedChild, childList, challenges = [], isLoading, error, completeChallenge, setSelectedChild } = useChildContext();
 
   const pillarOptions = [
     { value: 'all', label: 'All Pillars' },
@@ -39,21 +39,27 @@ export function Challenges() {
   const statusOptions = [
     { value: 'all', label: 'All Status' },
     { value: 'completed', label: 'Completed' },
-    { value: 'incomplete', label: 'Incomplete' },
+    { value: 'active', label: 'Active' },
   ];
 
   if (isLoading) {
     return (
-      <Box p={8}>
-        <Text>Loading challenges...</Text>
+      <Box minH="100vh" bg="gray.50">
+        <DashboardNav />
+        <Container maxW="container.xl" py={8}>
+          <Text>Loading challenges...</Text>
+        </Container>
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box p={8}>
-        <Text color="red.500">Error loading challenges: {error.message}</Text>
+      <Box minH="100vh" bg="gray.50">
+        <DashboardNav />
+        <Container maxW="container.xl" py={8}>
+          <Text color="red.500">Error loading challenges: {error.message}</Text>
+        </Container>
       </Box>
     );
   }
@@ -97,74 +103,77 @@ export function Challenges() {
 
   return (
     <SessionGuard>
-      <DashboardNav />
-      <Container maxW="container.xl" py={8}>
-        <VStack spacing={8} align="stretch">
-          <Box>
-            <ChildSwitcher
-              children={childList}
-              selectedChildId={selectedChild?.id || null}
-              onChildSelect={(childId) => {
-                const child = childList.find(c => c.id === childId) || null;
-                setSelectedChild(child);
-              }}
-            />
-          </Box>
-
-          <Box>
-            <Heading size="lg">Challenges</Heading>
-            <Text color="gray.600">Browse and complete challenges to help your child grow</Text>
-          </Box>
-
-          <Box>
-            <HStack gap={4}>
-              <InputGroup maxW="300px">
-                <Input
-                  placeholder="Search challenges..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </InputGroup>
-
-              <Box width="200px">
-                <Select
-                  value={selectedPillar}
-                  onChange={(option) => setSelectedPillar(option || { value: 'all', label: 'All Pillars' })}
-                  options={pillarOptions}
-                />
-              </Box>
-
-              <Box width="200px">
-                <Select
-                  value={selectedStatus}
-                  onChange={(option) => setSelectedStatus(option || { value: 'all', label: 'All Status' })}
-                  options={statusOptions}
-                />
-              </Box>
-            </HStack>
-          </Box>
-
-          {!selectedChild ? (
-            <Box textAlign="center" py={8}>
-              <Text>Please select a child to view their age-appropriate challenges.</Text>
+      <Box minH="100vh" bg="gray.50">
+        <DashboardNav />
+        <Container maxW="container.xl" py={8}>
+          <VStack spacing={8} align="stretch">
+            <Box>
+              <ChildSwitcher
+                selectedChild={selectedChild}
+                childList={childList}
+                onChildSelect={setSelectedChild}
+              />
             </Box>
-          ) : filteredChallenges?.length === 0 ? (
-            <Box textAlign="center" py={8}>
-              <Text>No challenges found matching your criteria.</Text>
+
+            <Box>
+              <Heading size="lg">Challenges</Heading>
+              <Text color="gray.600">Browse and complete challenges to help your child grow</Text>
             </Box>
-          ) : (
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
-              {filteredChallenges?.map((challenge: ChallengeWithStatus) => (
-                <ChallengeCard
-                  key={challenge.id}
-                  challenge={challenge}
-                  onComplete={handleComplete}
-                />
-              ))}
-            </SimpleGrid>
-          )}
-        </VStack>
-      </Container>
+
+            {!selectedChild ? (
+              <Box textAlign="center" py={8}>
+                <Text>Please select a child to view their age-appropriate challenges.</Text>
+              </Box>
+            ) : (
+              <>
+                <Box>
+                  <HStack gap={4}>
+                    <InputGroup maxW="300px">
+                      <Input
+                        placeholder="Search challenges..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </InputGroup>
+
+                    <Box width="200px">
+                      <Select
+                        value={selectedPillar}
+                        onChange={(option) => setSelectedPillar(option || { value: 'all', label: 'All Pillars' })}
+                        options={pillarOptions}
+                      />
+                    </Box>
+
+                    <Box width="200px">
+                      <Select
+                        value={selectedStatus}
+                        onChange={(option) => setSelectedStatus(option || { value: 'all', label: 'All Status' })}
+                        options={statusOptions}
+                      />
+                    </Box>
+                  </HStack>
+                </Box>
+
+                {filteredChallenges.length === 0 ? (
+                  <Box textAlign="center" py={8}>
+                    <Text>No challenges found matching your criteria.</Text>
+                  </Box>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
+                    {filteredChallenges.map((challenge) => (
+                      <ChallengeCard
+                        key={challenge.id}
+                        challenge={challenge}
+                        onComplete={handleComplete}
+                      />
+                    ))}
+                  </SimpleGrid>
+                )}
+              </>
+            )}
+          </VStack>
+        </Container>
+      </Box>
     </SessionGuard>
   );
 } 
