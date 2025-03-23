@@ -13,11 +13,16 @@ export async function apiRequest(endpoint: string, options: ApiOptions = {}) {
   const path = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
   const url = `${API_URL}${path}`;
 
+  // Get the auth token from the cookie
+  const cookies = document.cookie.split(';');
+  const authToken = cookies.find(cookie => cookie.trim().startsWith('auth_token='))?.split('=')[1];
+
   console.log('API Request:', {
     url,
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
       ...headers,
     },
     hasBody: !!body,
@@ -28,6 +33,7 @@ export async function apiRequest(endpoint: string, options: ApiOptions = {}) {
       method,
       headers: {
         'Content-Type': 'application/json',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
         ...headers,
       },
       credentials: 'include',
