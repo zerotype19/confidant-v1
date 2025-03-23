@@ -10,16 +10,16 @@ const queryClient = new QueryClient();
 
 export function App() {
   return (
-    <ChakraProvider theme={theme}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ChildProvider>
-            <Router>
+    <Router>
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ChildProvider>
               <AppRoutes />
-            </Router>
-          </ChildProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ChakraProvider>
+            </ChildProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ChakraProvider>
+    </Router>
   );
 } 
