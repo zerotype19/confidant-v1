@@ -13,7 +13,7 @@ import { ChallengeWithStatus } from '../types/challenge';
 
 interface ChallengeCardProps {
   challenge: ChallengeWithStatus;
-  onComplete: () => void;
+  onComplete: (reflection?: string, moodRating?: number) => Promise<void>;
 }
 
 export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
@@ -22,7 +22,7 @@ export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
 
   const handleComplete = async (reflection?: string, moodRating?: number) => {
     if (onComplete) {
-      await onComplete();
+      await onComplete(reflection, moodRating);
     }
     setIsOpen(false);
   };
@@ -55,7 +55,7 @@ export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
 
         <Button
           colorScheme="primary"
-          onClick={onComplete}
+          onClick={() => onComplete()}
           size="lg"
         >
           Complete Challenge
