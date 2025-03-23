@@ -19,12 +19,18 @@ import { ChildSwitcher } from '../components/dashboard/ChildSwitcher';
 import { DashboardNav } from '../components/dashboard/DashboardNav';
 import { ChallengeWithStatus } from '../types/challenge';
 import { CompleteChallengeModal } from '../components/CompleteChallengeModal';
+import { useEffect } from 'react';
 
 const { toast } = createStandaloneToast();
 
 export function Dashboard() {
   const { selectedChild, childList, todaysChallenge, isLoading, error, completeChallenge, setSelectedChild } = useChildContext();
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  useEffect(() => {
+    console.log('Selected Child:', selectedChild);
+    console.log('Today\'s Challenge:', todaysChallenge);
+  }, [selectedChild, todaysChallenge]);
 
   if (isLoading) {
     return (
@@ -115,17 +121,8 @@ export function Dashboard() {
                 <Box>
                   <ChallengeCard
                     challenge={todaysChallenge as ChallengeWithStatus}
-                    onComplete={handleComplete}
+                    onComplete={onOpen}
                   />
-                  <Box mt={4} textAlign="center">
-                    <Button
-                      colorScheme="primary"
-                      size="lg"
-                      onClick={onOpen}
-                    >
-                      Complete Challenge
-                    </Button>
-                  </Box>
                 </Box>
               ) : (
                 <Box textAlign="center" py={8}>
