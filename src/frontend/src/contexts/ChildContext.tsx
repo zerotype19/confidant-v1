@@ -41,7 +41,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
       try {
         const response = await apiRequest('/children');
         if (!response.success) {
-          throw new Error('Failed to fetch children');
+          throw new Error(response.error || 'Failed to fetch children');
         }
         
         const children = response.results;
@@ -54,6 +54,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
         
         setIsLoading(false);
       } catch (err) {
+        console.error('Error fetching children:', err);
         setError(err instanceof Error ? err : new Error('An error occurred'));
         setIsLoading(false);
       }
@@ -77,10 +78,19 @@ export function ChildProvider({ children }: ChildProviderProps) {
           apiRequest(`/challenges/today?child_id=${selectedChild.id}`)
         ]);
 
-        setChallenges(challengesData.challenges);
-        setTodaysChallenge(todaysChallengeData.challenge);
+        if (!challengesData.success) {
+          throw new Error(challengesData.error || 'Failed to fetch challenges');
+        }
+
+        if (!todaysChallengeData.success) {
+          throw new Error(todaysChallengeData.error || 'Failed to fetch today\'s challenge');
+        }
+
+        setChallenges(challengesData.results);
+        setTodaysChallenge(todaysChallengeData.results);
         setIsLoading(false);
       } catch (err) {
+        console.error('Error fetching challenges:', err);
         setError(err instanceof Error ? err : new Error('An error occurred'));
         setIsLoading(false);
       }
@@ -113,8 +123,8 @@ export function ChildProvider({ children }: ChildProviderProps) {
         apiRequest(`/challenges/today?child_id=${selectedChild.id}`)
       ]);
 
-      setChallenges(challengesData.challenges);
-      setTodaysChallenge(todaysChallengeData.challenge);
+      setChallenges(challengesData.results);
+      setTodaysChallenge(todaysChallengeData.results);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('An error occurred'));
       throw err;
