@@ -1,11 +1,9 @@
 name = "confidant-api"
-main = "index.ts"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
+main = "src/index.ts"
+compatibility_date = "2024-02-20"
 
 [vars]
-ENVIRONMENT = "production"
-API_URL = "https://confidant-api.kevin-mcgovern.workers.dev"
+JWT_SECRET = "your-secret-key"
 FRONTEND_URL = "https://confidant-web.pages.dev"
 
 # D1 Database Configuration
