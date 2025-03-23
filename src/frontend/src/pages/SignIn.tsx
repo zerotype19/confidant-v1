@@ -13,6 +13,7 @@ import {
   Divider,
   HStack,
   Checkbox,
+  Container,
 } from '@chakra-ui/react'
 import { useAuth } from '@/contexts/auth-context'
 
@@ -45,8 +46,8 @@ export default function SignIn() {
   }
 
   return (
-    <Box minH="100vh" bg="gray.50" py={12} px={4} sm:px={6} lg:px={8}>
-      <Box maxW="md" mx="auto">
+    <Box minH="100vh" bg="gray.50" py={12}>
+      <Container maxW="md">
         <VStack spacing={8}>
           <Box textAlign="center">
             <img
@@ -67,7 +68,7 @@ export default function SignIn() {
             </Text>
           </Box>
 
-          <Box bg="white" py={8} px={4} shadow="sm" rounded="lg" sm:px={10}>
+          <Box bg="white" py={8} px={4} shadow="sm" rounded="lg">
             <form onSubmit={handleSubmit}>
               <VStack spacing={6}>
                 <FormControl isRequired>
@@ -124,7 +125,7 @@ export default function SignIn() {
             </Box>
           </Box>
         </VStack>
-      </Box>
+      </Container>
     </Box>
   )
 } 
