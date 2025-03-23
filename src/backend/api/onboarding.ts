@@ -6,6 +6,10 @@ import { D1Database } from '../types';
 
 interface Bindings {
   DB: D1Database;
+  JWT_SECRET: string;
+  ENVIRONMENT: string;
+  API_URL: string;
+  FRONTEND_URL: string;
 }
 
 interface User {
@@ -55,7 +59,7 @@ const FamilySchema = z.object({
 const ChildSchema = z.object({
   name: z.string().min(1).max(100),
   age: z.number().int().min(0).max(18),
-  avatarUrl: z.string().url().nullable(),
+  avatarUrl: z.string().url().nullable().optional(),
 });
 
 const onboardingRouter = new Hono<{ Bindings: Bindings }>();
@@ -68,62 +72,53 @@ onboardingRouter.post('/family', verifySession, async (c) => {
 
   try {
     const data = FamilySchema.parse(body);
+    console.log('Parsed family data:', data);
     
-    // Start a transaction
-    await DB.prepare('BEGIN TRANSACTION').run();
-
-    try {
-      // Ensure user exists in database
-      const userResult = await DB.prepare(`
-        SELECT id FROM users WHERE id = ?
-      `).bind(claims.sub).first<Pick<User, 'id'>>();
-
-      if (!userResult) {
-        // Create user if they don't exist
-        await DB.prepare(`
-          INSERT INTO users (id, email, name, auth_provider, auth_provider_id)
-          VALUES (?, ?, ?, ?, ?)
-        `).bind(
-          claims.sub,
-          claims.email,
-          claims.name || null,
-          claims.auth_provider,
-          claims.auth_provider_id
-        ).run();
-      }
-
+    const familyId = nanoid();
+    const familyMemberId = nanoid();
+    const subscriptionId = nanoid();
+    
+    // Use D1's batch API for atomic operations
+    const result = await DB.batch([
+      // Create user if they don't exist (will be ignored if user exists due to unique constraint)
+      DB.prepare(`
+        INSERT OR IGNORE INTO users (id, email, name, auth_provider, auth_provider_id)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(
+        claims.sub,
+        claims.email,
+        claims.name || null,
+        claims.auth_provider,
+        claims.auth_provider_id
+      ),
+      
       // Create family
-      const familyId = nanoid();
-      await DB.prepare(`
+      DB.prepare(`
         INSERT INTO families (id, name)
         VALUES (?, ?)
-      `).bind(familyId, data.name).run();
-
+      `).bind(familyId, data.name),
+      
       // Add user as family member with guardian role
-      const familyMemberId = nanoid();
-      await DB.prepare(`
+      DB.prepare(`
         INSERT INTO family_members (id, family_id, user_id, role)
         VALUES (?, ?, ?, 'guardian')
-      `).bind(familyMemberId, familyId, claims.sub).run();
-
+      `).bind(familyMemberId, familyId, claims.sub),
+      
       // Create free subscription
-      const subscriptionId = nanoid();
-      await DB.prepare(`
+      DB.prepare(`
         INSERT INTO subscriptions (id, family_id, stripe_customer_id, stripe_subscription_id, status)
         VALUES (?, ?, NULL, NULL, 'free')
-      `).bind(subscriptionId, familyId).run();
+      `).bind(subscriptionId, familyId)
+    ]);
 
-      await DB.prepare('COMMIT').run();
-      return c.json({ familyId, message: 'Family created successfully' }, 201);
-    } catch (error) {
-      await DB.prepare('ROLLBACK').run();
-      throw error;
-    }
+    console.log('Batch operation results:', result);
+    return c.json({ familyId, message: 'Family created successfully' }, 201);
   } catch (error) {
+    console.error('Family creation error:', error);
     if (error instanceof z.ZodError) {
       return c.json({ error: error.errors }, 400);
     }
-    return c.json({ error: 'Failed to create family' }, 500);
+    return c.json({ error: `Failed to create family: ${error.message}` }, 500);
   }
 });
 
