@@ -165,7 +165,7 @@ childrenRouter.get('/', verifySession, async (c) => {
     `).bind(claims.sub).first<{ family_id: string }>();
 
     if (!familyMember) {
-      return c.json({ error: 'Family not found' }, 404);
+      return c.json({ success: false, error: 'Family not found' }, 404);
     }
 
     // Get all children
@@ -176,10 +176,16 @@ childrenRouter.get('/', verifySession, async (c) => {
       ORDER BY created_at DESC
     `).bind(familyMember.family_id).all();
 
-    return c.json({ children });
+    return c.json({ 
+      success: true,
+      results: children.results 
+    });
   } catch (error) {
     console.error('Error getting children:', error);
-    return c.json({ error: 'Failed to get children' }, 500);
+    return c.json({ 
+      success: false,
+      error: 'Failed to get children' 
+    }, 500);
   }
 });
 
