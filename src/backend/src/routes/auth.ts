@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { Env } from '../types';
 import { nanoid } from 'nanoid';
 import { generateToken, setAuthCookie } from '../utils/auth';
+import { verify } from 'hono/jwt';
 
 const authRouter = new Hono<{ Bindings: Env }>();
 
@@ -128,6 +129,30 @@ authRouter.get('/google/callback', async (c) => {
   } catch (error) {
     console.error('Google callback error:', error);
     return c.redirect(`${c.env.FRONTEND_URL}/signin?error=${encodeURIComponent('Authentication failed')}`);
+  }
+});
+
+// Add validate endpoint
+authRouter.get('/validate', async (c) => {
+  try {
+    const cookie = c.req.header('cookie');
+    if (!cookie) {
+      return c.json({ error: 'No cookie provided' }, 401);
+    }
+
+    const authToken = cookie.split(';')
+      .find(c => c.trim().startsWith('auth_token='))
+      ?.split('=')[1];
+
+    if (!authToken) {
+      return c.json({ error: 'No auth token found in cookie' }, 401);
+    }
+
+    const payload = await verify(authToken, c.env.JWT_SECRET);
+    return c.json({ user: payload });
+  } catch (error) {
+    console.error('Validation error:', error);
+    return c.json({ error: 'Invalid token' }, 401);
   }
 });
 

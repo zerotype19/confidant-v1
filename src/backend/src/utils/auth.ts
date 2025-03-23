@@ -15,5 +15,5 @@ export async function generateToken(user: User, env: Env): Promise<string> {
 }
 
 export function setAuthCookie(c: Context<{ Bindings: Env }>, token: string): void {
-  c.header('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
+  c.header('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=604800`);
 } 
