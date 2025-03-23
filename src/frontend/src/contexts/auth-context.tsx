@@ -32,10 +32,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const userData = await apiRequest('/auth/me');
+      console.log('AuthProvider: Checking auth status...');
+      const userData = await apiRequest('/auth/validate');
+      console.log('AuthProvider: Auth validation response:', userData);
       setUser(userData);
     } catch (error) {
       console.error('Auth check failed:', error);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
