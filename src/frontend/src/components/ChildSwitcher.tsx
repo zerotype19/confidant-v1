@@ -9,6 +9,8 @@ interface Child {
   name: string;
   age: number;
   age_range: string;
+  created_at: string;
+  updated_at: string;
   avatar?: string;
 }
 
