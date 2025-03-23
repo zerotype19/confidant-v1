@@ -39,12 +39,17 @@ export function ChildProvider({ children }: ChildProviderProps) {
   useEffect(() => {
     async function fetchChildren() {
       try {
-        const childrenData = await apiRequest('/children');
-        setChildList(childrenData.children);
+        const response = await apiRequest('/children');
+        if (!response.success) {
+          throw new Error('Failed to fetch children');
+        }
+        
+        const children = response.results;
+        setChildList(children);
         
         // Auto-select child if there's only one
-        if (childrenData.children.length === 1 && !selectedChild) {
-          setSelectedChild(childrenData.children[0]);
+        if (children.length === 1 && !selectedChild) {
+          setSelectedChild(children[0]);
         }
         
         setIsLoading(false);
