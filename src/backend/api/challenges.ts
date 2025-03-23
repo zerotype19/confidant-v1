@@ -44,7 +44,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
     const childId = c.req.query('child_id');
 
     if (!childId) {
-      return c.json({ error: 'Child ID is required' }, 400);
+      return c.json({ challenge: null, completed: false });
     }
 
     // Verify child belongs to user's family
@@ -186,14 +186,14 @@ challengesRouter.get('/', verifySession, async (c) => {
     const { DB } = c.env;
     const childId = c.req.query('child_id');
 
-    if (!childId) {
-      return c.json({ error: 'Child ID is required' }, 400);
-    }
-
     // Get all challenges
     const challenges = await DB.prepare(`
       SELECT * FROM challenges ORDER BY created_at DESC
     `).all<Challenge>();
+
+    if (!childId) {
+      return c.json({ challenges: [] });
+    }
 
     // Get completed challenges for this child
     const completedChallenges = await DB.prepare(`

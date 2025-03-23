@@ -36,16 +36,37 @@ export function ChildProvider({ children }: ChildProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Fetch children list
   useEffect(() => {
-    async function fetchData() {
+    async function fetchChildren() {
       try {
-        const [childrenData, challengesData, todaysChallengeData] = await Promise.all([
-          apiRequest('/children'),
-          apiRequest('/challenges'),
-          apiRequest('/challenges/today')
+        const childrenData = await apiRequest('/children');
+        setChildList(childrenData.children);
+        setIsLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('An error occurred'));
+        setIsLoading(false);
+      }
+    }
+
+    fetchChildren();
+  }, []);
+
+  // Fetch challenges when child is selected
+  useEffect(() => {
+    async function fetchChallenges() {
+      if (!selectedChild) {
+        setChallenges([]);
+        setTodaysChallenge(null);
+        return;
+      }
+
+      try {
+        const [challengesData, todaysChallengeData] = await Promise.all([
+          apiRequest(`/challenges?child_id=${selectedChild.id}`),
+          apiRequest(`/challenges/today?child_id=${selectedChild.id}`)
         ]);
 
-        setChildList(childrenData.children);
         setChallenges(challengesData.challenges);
         setTodaysChallenge(todaysChallengeData.challenge);
         setIsLoading(false);
@@ -55,8 +76,8 @@ export function ChildProvider({ children }: ChildProviderProps) {
       }
     }
 
-    fetchData();
-  }, []);
+    fetchChallenges();
+  }, [selectedChild]);
 
   const completeChallenge = async (data: { reflection?: string; moodRating?: number }) => {
     if (!selectedChild || !todaysChallenge) {
@@ -71,36 +92,15 @@ export function ChildProvider({ children }: ChildProviderProps) {
         mood_rating: data.moodRating
       };
 
-      const response = await fetch(`${API_URL}/api/challenges/complete`, {
+      await apiRequest('/challenges/complete', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(input)
+        body: input
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to complete challenge');
-      }
-
       // Refetch data to update state
-      const [challengesRes, todaysChallengeRes] = await Promise.all([
-        fetch(`${API_URL}/api/challenges?child_id=${selectedChild.id}`, {
-          credentials: 'include'
-        }),
-        fetch(`${API_URL}/api/challenges/today?child_id=${selectedChild.id}`, {
-          credentials: 'include'
-        })
-      ]);
-
-      if (!challengesRes.ok || !todaysChallengeRes.ok) {
-        throw new Error('Failed to fetch updated data');
-      }
-
       const [challengesData, todaysChallengeData] = await Promise.all([
-        challengesRes.json(),
-        todaysChallengeRes.json()
+        apiRequest(`/challenges?child_id=${selectedChild.id}`),
+        apiRequest(`/challenges/today?child_id=${selectedChild.id}`)
       ]);
 
       setChallenges(challengesData.challenges);
