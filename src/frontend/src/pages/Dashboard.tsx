@@ -3,11 +3,13 @@ import {
   Heading,
   Text,
   VStack,
+} from '@chakra-ui/react';
+import {
   Alert,
   AlertIcon,
   AlertTitle,
   AlertDescription,
-} from '@chakra-ui/react';
+} from '@chakra-ui/alert';
 import { createStandaloneToast } from '@chakra-ui/toast';
 import { useChildContext } from '../contexts/ChildContext';
 import { ChallengeCard } from '../components/ChallengeCard';
