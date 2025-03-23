@@ -3,13 +3,13 @@ import {
   Heading,
   Text,
   VStack,
-} from '@chakra-ui/react';
-import {
   Alert,
   AlertIcon,
   AlertTitle,
   AlertDescription,
-} from '@chakra-ui/alert';
+  Spinner,
+  Container,
+} from '@chakra-ui/react';
 import { createStandaloneToast } from '@chakra-ui/toast';
 import { useChildContext } from '../contexts/ChildContext';
 import { ChallengeCard } from '../components/ChallengeCard';
@@ -23,17 +23,25 @@ export function Dashboard() {
 
   if (isLoading) {
     return (
-      <Box p={8}>
-        <Text>Loading dashboard...</Text>
-      </Box>
+      <Container maxW="container.xl" py={8}>
+        <Box display="flex" justifyContent="center" alignItems="center" minH="60vh">
+          <Spinner size="xl" color="primary.600" thickness="4px" />
+        </Box>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <Box p={8}>
-        <Text color="red.500">Error loading dashboard: {error.message}</Text>
-      </Box>
+      <Container maxW="container.xl" py={8}>
+        <Alert status="error" variant="subtle" rounded="md">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Error loading dashboard</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Box>
+        </Alert>
+      </Container>
     );
   }
 
@@ -59,8 +67,8 @@ export function Dashboard() {
   };
 
   return (
-    <Box p={8}>
-      <VStack gap={8} align="stretch">
+    <Container maxW="container.xl" py={8}>
+      <VStack spacing={8} align="stretch">
         <Box>
           <ChildSwitcher
             children={childList}
@@ -73,7 +81,7 @@ export function Dashboard() {
         </Box>
 
         {!selectedChild ? (
-          <Alert status="info" variant="subtle">
+          <Alert status="info" variant="subtle" rounded="md">
             <AlertIcon />
             <Box>
               <AlertTitle>No Child Selected</AlertTitle>
@@ -102,6 +110,6 @@ export function Dashboard() {
           </>
         )}
       </VStack>
-    </Box>
+    </Container>
   );
 } 
