@@ -11,6 +11,8 @@ export default function AppRoutes() {
       {/* Public routes */}
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/auth/login" element={<Navigate to="/signin" replace />} />
+      <Route path="/auth/register" element={<Navigate to="/signup" replace />} />
       
       {/* Protected routes */}
       <Route path="/" element={
