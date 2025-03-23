@@ -4,20 +4,8 @@
   "exclude": [
     "/build/*",
     "/static/*",
-    "/assets/*",
-    "/*.html",
-    "/*.js",
-    "/*.css",
-    "/*.png",
-    "/*.jpg",
-    "/*.jpeg",
-    "/*.gif",
-    "/*.svg",
-    "/*.ico",
-    "/*.woff",
-    "/*.woff2",
-    "/*.ttf",
-    "/*.eot",
-    "/*.json"
+    "/favicon.ico",
+    "/manifest.json",
+    "/robots.txt"
   ]
 } 
