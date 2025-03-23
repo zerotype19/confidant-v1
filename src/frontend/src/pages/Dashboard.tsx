@@ -14,7 +14,7 @@ import {
 import { createStandaloneToast } from '@chakra-ui/toast';
 import { useChildContext } from '../contexts/ChildContext';
 import { ChallengeCard } from '../components/ChallengeCard';
-import { ChildSwitcher } from '../components/dashboard/ChildSwitcher';
+import { ChildSwitcher, Child } from '../components/ChildSwitcher';
 import { DashboardNav } from '../components/dashboard/DashboardNav';
 import { ChallengeWithStatus } from '../types/challenge';
 import { CompleteChallengeModal } from '../components/CompleteChallengeModal';

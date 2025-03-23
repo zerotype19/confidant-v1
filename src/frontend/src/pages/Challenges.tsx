@@ -16,7 +16,7 @@ import { ChallengeCard } from '../components/ChallengeCard';
 import { useChildContext } from '../contexts/ChildContext';
 import SessionGuard from '../components/SessionGuard';
 import { DashboardNav } from '../components/dashboard/DashboardNav';
-import { ChildSwitcher } from '../components/dashboard/ChildSwitcher';
+import { ChildSwitcher, Child } from '../components/ChildSwitcher';
 
 export function Challenges() {
   const [searchQuery, setSearchQuery] = useState('');

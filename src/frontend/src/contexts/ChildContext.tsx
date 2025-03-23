@@ -1,15 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ChallengeWithStatus, CompleteChallengeInput } from '../types/challenge';
 import { apiRequest } from '../utils/api';
-
-interface Child {
-  id: string;
-  name: string;
-  age: number;
-  age_range: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Child } from '../components/ChildSwitcher';
 
 interface ChildContextType {
   selectedChild: Child | null;
