@@ -9,7 +9,6 @@ import {
   AlertDescription,
   Spinner,
   Container,
-  Button,
   useDisclosure,
 } from '@chakra-ui/react';
 import { createStandaloneToast } from '@chakra-ui/toast';
