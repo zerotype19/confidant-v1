@@ -44,8 +44,13 @@ export function ChildProvider({ children }: ChildProviderProps) {
   useEffect(() => {
     const fetchChildren = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
         const response = await apiRequest('/children');
-        const children = response.data.map((child: any) => ({
+        if (!response || !Array.isArray(response)) {
+          throw new Error('Invalid response format from /children endpoint');
+        }
+        const children = response.map((child: any) => ({
           ...child,
           age_range: getAgeRange(child.age),
         }));
@@ -54,6 +59,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
           setSelectedChild(children[0].id);
         }
       } catch (err) {
+        console.error('Error fetching children:', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch children'));
       } finally {
         setIsLoading(false);
@@ -67,8 +73,13 @@ export function ChildProvider({ children }: ChildProviderProps) {
     if (selectedChild) {
       const fetchChallenges = async () => {
         try {
+          setIsLoading(true);
+          setError(null);
           const response = await apiRequest(`/challenges?child_id=${selectedChild.id}`);
-          const challenges = response.data.map((challenge: any) => ({
+          if (!response || !Array.isArray(response)) {
+            throw new Error('Invalid response format from /challenges endpoint');
+          }
+          const challenges = response.map((challenge: any) => ({
             ...challenge,
             status: challenge.completed ? 'completed' : 'active',
           }));
@@ -81,7 +92,10 @@ export function ChildProvider({ children }: ChildProviderProps) {
           );
           setTodaysChallenge(todaysChallenge || null);
         } catch (err) {
+          console.error('Error fetching challenges:', err);
           setError(err instanceof Error ? err : new Error('Failed to fetch challenges'));
+        } finally {
+          setIsLoading(false);
         }
       };
 
@@ -100,10 +114,14 @@ export function ChildProvider({ children }: ChildProviderProps) {
         mood_rating: data.moodRating,
       };
 
-      await apiRequest('/challenges/complete', {
+      const response = await apiRequest('/challenges/complete', {
         method: 'POST',
         body: JSON.stringify(input),
       });
+
+      if (!response) {
+        throw new Error('Invalid response from /challenges/complete endpoint');
+      }
 
       // Update the challenges list
       setChallenges(prevChallenges =>
@@ -116,6 +134,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
 
       setTodaysChallenge(null);
     } catch (err) {
+      console.error('Error completing challenge:', err);
       setError(err instanceof Error ? err : new Error('Failed to complete challenge'));
       throw err;
     }

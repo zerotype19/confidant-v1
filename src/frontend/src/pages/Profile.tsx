@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiRequest } from '../utils/api'
 
 interface User {
   id: string
@@ -16,14 +17,10 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState('')
 
-  const { data: user, isLoading } = useQuery<User>({
+  const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ['user'],
     queryFn: async () => {
-      const response = await fetch('/api/auth/me')
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data')
-      }
-      const data = await response.json()
+      const data = await apiRequest('/auth/me')
       setName(data.name)
       return data
     },
@@ -31,17 +28,10 @@ export default function Profile() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (newName: string) => {
-      const response = await fetch('/api/auth/me', {
+      return apiRequest('/auth/me', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ name: newName }),
       })
-      if (!response.ok) {
-        throw new Error('Failed to update profile')
-      }
-      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
@@ -53,6 +43,28 @@ export default function Profile() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600">Error loading profile</h2>
+          <p className="mt-2 text-gray-600">Please try again later</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900">No profile data</h2>
+          <p className="mt-2 text-gray-600">Please try logging in again</p>
+        </div>
       </div>
     )
   }
@@ -89,7 +101,7 @@ export default function Profile() {
                       className="input"
                     />
                   ) : (
-                    <p className="text-sm text-gray-900">{user?.name}</p>
+                    <p className="text-sm text-gray-900">{user.name}</p>
                   )}
                 </div>
               </div>
@@ -99,7 +111,7 @@ export default function Profile() {
                   Email
                 </label>
                 <div className="mt-1">
-                  <p className="text-sm text-gray-900">{user?.email}</p>
+                  <p className="text-sm text-gray-900">{user.email}</p>
                 </div>
               </div>
 
@@ -117,7 +129,7 @@ export default function Profile() {
                       type="button"
                       onClick={() => {
                         setIsEditing(false)
-                        setName(user?.name || '')
+                        setName(user.name)
                       }}
                       className="btn btn-secondary"
                     >
@@ -148,10 +160,10 @@ export default function Profile() {
               <div>
                 <p className="text-sm font-medium text-gray-900">Current Plan</p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {user?.subscription.status === 'premium' ? 'Premium' : 'Free'}
+                  {user.subscription.status === 'premium' ? 'Premium' : 'Free'}
                 </p>
               </div>
-              {user?.subscription.expiresAt && (
+              {user.subscription.expiresAt && (
                 <div>
                   <p className="text-sm font-medium text-gray-900">Expires</p>
                   <p className="mt-1 text-sm text-gray-500">
@@ -159,7 +171,7 @@ export default function Profile() {
                   </p>
                 </div>
               )}
-              {user?.subscription.status === 'free' && (
+              {user.subscription.status === 'free' && (
                 <button
                   type="button"
                   className="btn btn-primary"

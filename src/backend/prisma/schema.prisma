@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  name              String
+  password_hash     String
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
+  children          Child[]
+  techniqueCompletions TechniqueCompletion[]
+}
+
+model Child {
+  id          String    @id @default(uuid())
+  name        String
+  age         Int
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id])
+  challenges  Challenge[]
+}
+
+model Challenge {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  created_at  DateTime  @default(now())
+  completed   Boolean   @default(false)
+  child_id    String
+  child       Child     @relation(fields: [child_id], references: [id])
+}
+
+model Technique {
+  id              String              @id @default(uuid())
+  title           String
+  description     String
+  steps           String[]
+  example_dialogue String
+  common_mistakes String[]
+  use_cases       String[]
+  pillar_ids      Int[]
+  age_range       String
+  created_at      DateTime            @default(now())
+  updated_at      DateTime            @updatedAt
+  completions     TechniqueCompletion[]
+}
+
+model TechniqueCompletion {
+  id            String    @id @default(uuid())
+  technique_id  String
+  technique     Technique @relation(fields: [technique_id], references: [id])
+  user_id       String
+  user          User      @relation(fields: [user_id], references: [id])
+  reflection    String?
+  mood_rating   Int?
+  created_at    DateTime  @default(now())
+} 

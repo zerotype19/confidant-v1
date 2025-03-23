@@ -2,16 +2,6 @@ name = "confidant-api"
 main = "src/index.ts"
 compatibility_date = "2024-02-20"
 
-[vars]
-JWT_SECRET = "your-secret-key"
-FRONTEND_URL = "https://confidant-web.pages.dev"
-API_URL = "https://api.confidant.app"
-
-# OAuth Configuration
-GOOGLE_CLIENT_ID = ""
-GOOGLE_CLIENT_SECRET = ""
-
-# D1 Database Configuration
 [[d1_databases]]
 binding = "DB"
 database_name = "confidant-db"

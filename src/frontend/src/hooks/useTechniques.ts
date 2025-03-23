@@ -24,18 +24,41 @@ export function useTechniques() {
   const { data, isLoading, error } = useQuery<Technique[]>({
     queryKey: ['techniques'],
     queryFn: async () => {
-      const response = await apiRequest('/techniques');
-      return response.data;
+      console.log('Fetching techniques...');
+      try {
+        const data = await apiRequest('/techniques');
+        console.log('Techniques response:', data);
+        if (!Array.isArray(data)) {
+          console.error('Invalid techniques response:', data);
+          throw new Error('Invalid response format from /techniques endpoint');
+        }
+        return data;
+      } catch (error) {
+        console.error('Error fetching techniques:', error);
+        throw error;
+      }
     },
+    retry: 1,
   });
 
   const completeTechniqueMutation = useMutation({
     mutationFn: async ({ techniqueId, input }: { techniqueId: string; input: CompleteTechniqueInput }) => {
-      const response = await apiRequest(`/techniques/${techniqueId}/complete`, {
-        method: 'POST',
-        body: JSON.stringify(input),
-      });
-      return response.data;
+      console.log('Completing technique:', techniqueId, input);
+      try {
+        const data = await apiRequest(`/techniques/${techniqueId}/complete`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+        console.log('Complete technique response:', data);
+        if (!data) {
+          console.error('Invalid complete technique response:', data);
+          throw new Error('Invalid response from /techniques/complete endpoint');
+        }
+        return data;
+      } catch (error) {
+        console.error('Error completing technique:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['techniques'] });

@@ -24,6 +24,12 @@ interface User {
 // Google OAuth endpoints
 authRouter.get('/google', async (c) => {
   try {
+    console.log('Environment variables:', {
+      GOOGLE_CLIENT_ID: c.env.GOOGLE_CLIENT_ID,
+      API_URL: c.env.API_URL,
+      FRONTEND_URL: c.env.FRONTEND_URL
+    });
+
     if (!c.env.GOOGLE_CLIENT_ID) {
       throw new Error('GOOGLE_CLIENT_ID is not configured');
     }
@@ -35,6 +41,7 @@ authRouter.get('/google', async (c) => {
       `&response_type=code` +
       `&scope=${encodeURIComponent('openid email profile')}`;
     
+    console.log('Redirecting to Google auth URL:', googleAuthUrl);
     return c.redirect(googleAuthUrl);
   } catch (error) {
     console.error('Google auth error:', error);

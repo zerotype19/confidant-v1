@@ -20,8 +20,13 @@ app.use('*', cors({
   credentials: true,
 }));
 
-// JWT middleware
+// JWT middleware - exclude OAuth routes
 app.use('*', async (c, next) => {
+  // Skip JWT for OAuth routes
+  if (c.req.path.startsWith('/api/auth/google')) {
+    return next();
+  }
+
   const jwtMiddleware = jwt({
     secret: c.env.JWT_SECRET || 'your-secret-key',
   });
