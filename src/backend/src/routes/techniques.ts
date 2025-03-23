@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { db } from '../db';
+import { Env } from '../types';
 
 interface RawTechnique {
   id: string;
@@ -25,10 +26,10 @@ interface Technique {
   age_range: string;
 }
 
-const router = new Hono();
+const techniquesRouter = new Hono<{ Bindings: Env }>();
 
 // Get all techniques
-router.get('/', async (c) => {
+techniquesRouter.get('/', async (c) => {
   try {
     const { results } = await db.prepare(`
       SELECT 
@@ -62,7 +63,7 @@ router.get('/', async (c) => {
 });
 
 // Complete a technique
-router.post('/:id/complete', async (c) => {
+techniquesRouter.post('/:id/complete', async (c) => {
   try {
     const id = c.req.param('id');
     const { reflection, mood_rating } = await c.req.json();
@@ -97,4 +98,4 @@ router.post('/:id/complete', async (c) => {
   }
 });
 
-export { router as techniquesRouter }; 
+export default techniquesRouter; 
