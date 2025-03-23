@@ -89,17 +89,60 @@ challengesRouter.get('/today', verifySession, async (c) => {
 
     const recentChallengeIds = recentChallenges.results?.map(c => c.challenge_id) || [];
 
-    // Get a random challenge that matches the child's age and hasn't been completed recently
+    // Get pillar usage counts for this child
+    const pillarUsage = await DB.prepare(`
+      SELECT c.pillar_id, COUNT(*) as count
+      FROM challenge_logs cl
+      JOIN challenges c ON cl.challenge_id = c.id
+      WHERE cl.child_id = ?
+      GROUP BY c.pillar_id
+      ORDER BY count ASC
+    `).bind(childId).all<{ pillar_id: number; count: number }>();
+
+    // Create a map of pillar usage
+    const pillarUsageMap = pillarUsage.results?.reduce((acc, { pillar_id, count }) => {
+      acc[pillar_id] = count;
+      return acc;
+    }, {} as Record<number, number>) || {};
+
+    // Find the least used pillar
+    const leastUsedPillar = pillarUsage.results?.[0]?.pillar_id || 1;
+
+    // Get a challenge that:
+    // 1. Matches the child's age range
+    // 2. Hasn't been completed in the last 7 days
+    // 3. Is from the least used pillar
+    // 4. Is randomly selected from matching challenges
     const challenge = await DB.prepare(`
-      SELECT * FROM challenges 
-      WHERE age_range LIKE ? 
-      ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
-      ORDER BY RANDOM() 
+      WITH matching_challenges AS (
+        SELECT * FROM challenges 
+        WHERE age_range LIKE ? 
+        AND pillar_id = ?
+        ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
+      )
+      SELECT * FROM matching_challenges
+      ORDER BY RANDOM()
       LIMIT 1
-    `).bind(`%${child.age}%`, ...recentChallengeIds).first<Challenge>();
+    `).bind(`%${child.age}%`, leastUsedPillar, ...recentChallengeIds).first<Challenge>();
 
     if (!challenge) {
-      return c.json({ error: 'No suitable challenges found' }, 404);
+      // If no challenge found with the least used pillar, try any age-appropriate challenge
+      const fallbackChallenge = await DB.prepare(`
+        SELECT * FROM challenges 
+        WHERE age_range LIKE ? 
+        ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
+        ORDER BY RANDOM() 
+        LIMIT 1
+      `).bind(`%${child.age}%`, ...recentChallengeIds).first<Challenge>();
+
+      if (!fallbackChallenge) {
+        return c.json({ error: 'No suitable challenges found' }, 404);
+      }
+
+      return c.json({ 
+        challenge: fallbackChallenge,
+        completed: false 
+      });
     }
 
     return c.json({ 
