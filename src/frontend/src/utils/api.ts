@@ -1,3 +1,5 @@
+import { API_URL } from '../config';
+
 interface ApiOptions {
   method?: string;
   body?: any;
@@ -10,7 +12,7 @@ export async function apiRequest(endpoint: string, options: ApiOptions = {}) {
   // Add /api prefix to all endpoints
   const path = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
 
-  const response = await fetch(path, {
+  const response = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
