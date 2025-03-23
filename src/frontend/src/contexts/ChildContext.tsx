@@ -23,6 +23,14 @@ interface ChildContextType {
 
 const ChildContext = createContext<ChildContextType | undefined>(undefined);
 
+export function useChildContext() {
+  const context = useContext(ChildContext);
+  if (context === undefined) {
+    throw new Error('useChildContext must be used within a ChildProvider');
+  }
+  return context;
+}
+
 interface ChildProviderProps {
   children: ReactNode;
 }
@@ -42,17 +50,12 @@ export function ChildProvider({ children }: ChildProviderProps) {
     async function fetchChildren() {
       try {
         const response = await apiRequest('/children');
-        if (!response.success) {
-          throw new Error(response.error || 'Failed to fetch children');
-        }
-        
         if (isMounted) {
-          const children = response.results;
-          setChildList(children);
+          setChildList(response);
           
           // Auto-select child if there's only one
-          if (children.length === 1 && !selectedChild) {
-            setSelectedChild(children[0]);
+          if (response.length === 1 && !selectedChild) {
+            setSelectedChild(response[0]);
           }
         }
       } catch (err) {
@@ -93,17 +96,9 @@ export function ChildProvider({ children }: ChildProviderProps) {
           apiRequest(`/challenges/today?child_id=${selectedChild.id}`)
         ]);
 
-        if (!challengesData.success) {
-          throw new Error(challengesData.error || 'Failed to fetch challenges');
-        }
-
-        if (!todaysChallengeData.success) {
-          throw new Error(todaysChallengeData.error || 'Failed to fetch today\'s challenge');
-        }
-
         if (isMounted) {
-          setChallenges(challengesData.results);
-          setTodaysChallenge(todaysChallengeData.results);
+          setChallenges(challengesData);
+          setTodaysChallenge(todaysChallengeData);
         }
       } catch (err) {
         console.error('Error fetching challenges:', err);
@@ -148,8 +143,8 @@ export function ChildProvider({ children }: ChildProviderProps) {
         apiRequest(`/challenges/today?child_id=${selectedChild.id}`)
       ]);
 
-      setChallenges(challengesData.results);
-      setTodaysChallenge(todaysChallengeData.results);
+      setChallenges(challengesData);
+      setTodaysChallenge(todaysChallengeData);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('An error occurred'));
       throw err;
@@ -172,12 +167,4 @@ export function ChildProvider({ children }: ChildProviderProps) {
       {children}
     </ChildContext.Provider>
   );
-}
-
-export function useChildContext() {
-  const context = useContext(ChildContext);
-  if (context === undefined) {
-    throw new Error('useChildContext must be used within a ChildProvider');
-  }
-  return context;
 } 
