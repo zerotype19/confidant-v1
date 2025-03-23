@@ -43,7 +43,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
     const { DB } = c.env;
     const childId = c.req.query('child_id');
 
-    console.log('Getting challenge for child:', childId);
+    console.log('Getting today\'s challenge for child:', childId);
 
     if (!childId) {
       return c.json({ success: true, challenge: null, completed: false });
@@ -79,6 +79,11 @@ challengesRouter.get('/today', verifySession, async (c) => {
         SELECT * FROM challenges WHERE id = ?
       `).bind(completedToday.challenge_id).first<Challenge>();
       
+      if (!challenge) {
+        console.error('Completed challenge not found:', completedToday.challenge_id);
+        return c.json({ success: false, error: 'Completed challenge not found' }, 500);
+      }
+
       return c.json({ 
         success: true,
         challenge,
@@ -86,95 +91,81 @@ challengesRouter.get('/today', verifySession, async (c) => {
       });
     }
 
+    // Get all challenges for the child's age range
+    const challenges = await DB.prepare(`
+      SELECT * FROM challenges 
+      WHERE age_range = ?
+      ORDER BY created_at DESC
+    `).bind('6-9').all<Challenge>();
+
+    if (!challenges.success) {
+      console.error('Failed to fetch challenges:', challenges.error);
+      return c.json({ success: false, error: 'Failed to fetch challenges from database' }, 500);
+    }
+
+    if (!challenges.results?.length) {
+      console.log('No challenges found for age range 6-9');
+      return c.json({ success: false, error: 'No challenges found for age range' }, 404);
+    }
+
     // Get recently completed challenges (last 7 days)
     const recentChallenges = await DB.prepare(`
       SELECT challenge_id 
       FROM challenge_logs 
       WHERE child_id = ? 
-      AND completed_at >= datetime('now', '-7 days')
+      AND completed_at >= date('now', '-7 days')
     `).bind(childId).all<{ challenge_id: string }>();
 
-    const recentChallengeIds = recentChallenges.results?.map(c => c.challenge_id) || [];
-    console.log('Recent challenge IDs:', recentChallengeIds);
+    if (!recentChallenges.success) {
+      console.error('Failed to fetch recent challenges:', recentChallenges.error);
+      return c.json({ success: false, error: 'Failed to fetch recent challenges' }, 500);
+    }
 
-    // Get pillar usage counts for this child
-    const pillarUsage = await DB.prepare(`
-      SELECT c.pillar_id, COUNT(*) as count
+    const recentChallengeIds = new Set(recentChallenges.results?.map(log => log.challenge_id) || []);
+
+    // Get pillar usage counts
+    const pillarCounts = await DB.prepare(`
+      SELECT pillar_id, COUNT(*) as count
       FROM challenge_logs cl
       JOIN challenges c ON cl.challenge_id = c.id
       WHERE cl.child_id = ?
-      GROUP BY c.pillar_id
-      ORDER BY count ASC
+      GROUP BY pillar_id
     `).bind(childId).all<{ pillar_id: number; count: number }>();
 
-    console.log('Pillar usage:', pillarUsage.results);
+    if (!pillarCounts.success) {
+      console.error('Failed to fetch pillar counts:', pillarCounts.error);
+      return c.json({ success: false, error: 'Failed to fetch pillar counts' }, 500);
+    }
 
-    // Create a map of pillar usage
-    const pillarUsageMap = pillarUsage.results?.reduce((acc, { pillar_id, count }) => {
+    const pillarUsage = pillarCounts.results?.reduce((acc, { pillar_id, count }) => {
       acc[pillar_id] = count;
       return acc;
     }, {} as Record<number, number>) || {};
 
     // Find the least used pillar
-    const leastUsedPillar = pillarUsage.results?.[0]?.pillar_id || 1;
-    console.log('Least used pillar:', leastUsedPillar);
+    const leastUsedPillar = Array.from({ length: 5 }, (_, i) => i + 1)
+      .reduce((min, pillar) => 
+        (pillarUsage[pillar] || 0) < (pillarUsage[min] || 0) ? pillar : min
+      );
 
-    // Get a challenge that:
-    // 1. Matches the child's age range
-    // 2. Hasn't been completed in the last 7 days
-    // 3. Is from the least used pillar
-    // 4. Is randomly selected from matching challenges
-    const challengeQuery = `
-      WITH matching_challenges AS (
-        SELECT * FROM challenges 
-        WHERE age_range = '6-9'
-        AND pillar_id = ?
-        ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
-      )
-      SELECT id, title, description, goal, steps, example_dialogue, tip, pillar_id, age_range, difficulty_level, created_at, updated_at
-      FROM matching_challenges
-      ORDER BY RANDOM()
-      LIMIT 1
-    `;
-    console.log('Challenge query:', challengeQuery);
-    console.log('Query params:', [leastUsedPillar, ...recentChallengeIds]);
+    // Find a challenge that:
+    // 1. Matches the least used pillar
+    // 2. Hasn't been completed recently
+    // 3. Is age-appropriate
+    let challenge = challenges.results.find(c => 
+      c.pillar_id === leastUsedPillar && 
+      !recentChallengeIds.has(c.id)
+    );
 
-    const challenge = await DB.prepare(challengeQuery)
-      .bind(leastUsedPillar, ...recentChallengeIds)
-      .first<Challenge>();
+    // If no challenge found with least used pillar, try any age-appropriate challenge
+    if (!challenge) {
+      console.log('No challenge found with least used pillar, trying any age-appropriate challenge');
+      challenge = challenges.results.find(c => !recentChallengeIds.has(c.id));
+    }
 
     if (!challenge) {
-      console.log('No challenge found with least used pillar, trying fallback');
-      // If no challenge found with the least used pillar, try any age-appropriate challenge
-      const fallbackQuery = `
-        WITH matching_challenges AS (
-          SELECT * FROM challenges 
-          WHERE age_range = '6-9'
-          ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
-        )
-        SELECT id, title, description, goal, steps, example_dialogue, tip, pillar_id, age_range, difficulty_level, created_at, updated_at
-        FROM matching_challenges
-        ORDER BY RANDOM() 
-        LIMIT 1
-      `;
-      console.log('Fallback query:', fallbackQuery);
-      console.log('Fallback params:', [...recentChallengeIds]);
-
-      const fallbackChallenge = await DB.prepare(fallbackQuery)
-        .bind(...recentChallengeIds)
-        .first<Challenge>();
-
-      if (!fallbackChallenge) {
-        console.log('No suitable challenges found');
-        return c.json({ success: false, error: 'No suitable challenges found' }, 404);
-      }
-
-      console.log('Found fallback challenge:', fallbackChallenge);
-      return c.json({ 
-        success: true,
-        challenge: fallbackChallenge,
-        completed: false 
-      });
+      console.log('No suitable challenges found');
+      return c.json({ success: false, error: 'No suitable challenges found' }, 404);
     }
 
     console.log('Found challenge:', challenge);
@@ -185,7 +176,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
     });
   } catch (error) {
     console.error('Error getting today\'s challenge:', error);
-    return c.json({ success: false, error: 'Failed to get today\'s challenge' }, 500);
+    return c.json({ success: false, error: error instanceof Error ? error.message : 'Failed to get today\'s challenge' }, 500);
   }
 });
 
@@ -294,7 +285,7 @@ challengesRouter.get('/', verifySession, async (c) => {
     return c.json({ success: true, results: challengesWithStatus });
   } catch (error) {
     console.error('Error getting challenges:', error);
-    return c.json({ success: false, error: 'Failed to get challenges' }, 500);
+    return c.json({ success: false, error: error instanceof Error ? error.message : 'Failed to get challenges' }, 500);
   }
 });
 
