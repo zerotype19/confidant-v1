@@ -3,40 +3,44 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { API_URL } from '../config'
+import { Child, Challenge } from '../types/child'
+import { ChildSwitcher } from '../components/dashboard/ChildSwitcher'
+import { ChallengeCard } from '../components/dashboard/ChallengeCard'
+import { StreakTracker } from '../components/dashboard/StreakTracker'
+import { JournalPreview } from '../components/dashboard/JournalPreview'
+import { CalendarStrip } from '../components/dashboard/CalendarStrip'
 
-interface Child {
-  id: string
-  name: string
-  age: number
-  challenges: Challenge[]
+interface ProgressSummary {
+  streak: number
+  coins: number
+  pillarProgress: Record<number, number>
+  badges: Array<{
+    id: string
+    name: string
+    emoji: string
+  }>
 }
 
-interface Challenge {
+interface JournalEntry {
   id: string
-  title: string
-  description: string
-  status: 'active' | 'completed' | 'archived'
-  progress: number
-  goal: string
-  steps: string
-  example_dialogue: string
-  tip: string
-  pillar_id: number
-  age_range: string
-  difficulty_level: number
+  content: string
+  date: string
+  childId: string
 }
 
 export default function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [selectedChild, setSelectedChild] = useState<string | null>(null)
-  const [dailyChallenge, setDailyChallenge] = useState<Challenge | null>(null)
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const { data: children, isLoading } = useQuery<Child[]>({
+  // Fetch children data
+  const { data: children, isLoading: isLoadingChildren } = useQuery<Child[]>({
     queryKey: ['children'],
     queryFn: async () => {
-      const response = await fetch('/api/children')
+      const response = await fetch(`${API_URL}/api/children`, {
+        credentials: 'include'
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch children')
       }
@@ -44,36 +48,94 @@ export default function Dashboard() {
     },
   })
 
+  // Set initial selected child
   useEffect(() => {
-    const fetchDailyChallenge = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/challenges/today`, {
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.error || 'Failed to fetch daily challenge')
-        }
-
-        const data = await response.json()
-        setDailyChallenge(data.challenge)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred')
-        console.error('Error fetching daily challenge:', err)
-      }
+    if (children?.length && !selectedChildId) {
+      setSelectedChildId(children[0].id)
     }
+  }, [children, selectedChildId])
 
-    fetchDailyChallenge()
-  }, [])
+  // Fetch daily challenge
+  const { data: dailyChallenge, isLoading: isLoadingChallenge } = useQuery<Challenge | null>({
+    queryKey: ['dailyChallenge', selectedChildId],
+    queryFn: async () => {
+      if (!selectedChildId) return null;
+      const response = await fetch(
+        `${API_URL}/api/challenges/today?child_id=${selectedChildId}`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch daily challenge');
+      }
+      return response.json();
+    },
+    enabled: !!selectedChildId,
+  });
+
+  // Fetch progress summary
+  const { data: progressSummary, isLoading: isLoadingProgress } = useQuery<ProgressSummary | null>({
+    queryKey: ['progressSummary', selectedChildId],
+    queryFn: async () => {
+      if (!selectedChildId) return null;
+      const response = await fetch(
+        `${API_URL}/api/progress/summary?child_id=${selectedChildId}`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch progress summary');
+      }
+      return response.json();
+    },
+    enabled: !!selectedChildId,
+  });
+
+  // Fetch latest journal entry
+  const { data: latestJournalEntry, isLoading: isLoadingJournal } = useQuery<JournalEntry | null>({
+    queryKey: ['latestJournal', selectedChildId],
+    queryFn: async () => {
+      if (!selectedChildId) return null;
+      const response = await fetch(
+        `${API_URL}/api/journal/latest?child_id=${selectedChildId}`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch latest journal entry');
+      }
+      return response.json();
+    },
+    enabled: !!selectedChildId,
+  });
+
+  // Generate calendar days
+  const calendarDays = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return {
+      date: date.toISOString(),
+      status: i === 0 ? 'completed' as const : i === 1 ? 'scheduled' as const : 'upcoming' as const,
+      pillarId: i === 1 ? 3 : undefined,
+    };
+  });
 
   const handleStartChallenge = () => {
-    if (dailyChallenge) {
-      navigate(`/challenges/${dailyChallenge.id}`)
+    if (selectedChildId && dailyChallenge) {
+      navigate(`/challenge/${selectedChildId}`)
     }
   }
 
-  if (isLoading) {
+  const handleAddJournalEntry = () => {
+    if (selectedChildId) {
+      navigate(`/journal/${selectedChildId}`)
+    }
+  }
+
+  const handlePlanAhead = () => {
+    if (selectedChildId) {
+      navigate(`/calendar/${selectedChildId}`)
+    }
+  }
+
+  if (isLoadingChildren) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -82,132 +144,55 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            A summary of your family's activities and challenges.
-          </p>
-        </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button
-            type="button"
-            className="btn btn-primary"
-          >
-            Add child
-          </button>
-        </div>
-      </div>
-
-      {/* Children selector */}
-      <div className="flex space-x-4">
-        {children?.map((child) => (
-          <button
-            key={child.id}
-            onClick={() => setSelectedChild(child.id)}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
-              selectedChild === child.id
-                ? 'bg-primary-100 text-primary-700'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            {child.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Active challenges */}
-      <div className="bg-white shadow sm:rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900">Active Challenges</h3>
-          <div className="mt-5">
-            <div className="space-y-4">
-              {children
-                ?.find((child) => child.id === selectedChild)
-                ?.challenges.filter((challenge) => challenge.status === 'active')
-                .map((challenge) => (
-                  <div
-                    key={challenge.id}
-                    className="relative pt-1"
-                  >
-                    <div className="flex mb-2 items-center justify-between">
-                      <div>
-                        <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary-600 bg-primary-200">
-                          {challenge.title}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-semibold inline-block text-primary-600">
-                          {challenge.progress}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200">
-                      <div
-                        style={{ width: `${challenge.progress}%` }}
-                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-500"
-                      ></div>
-                    </div>
-                    <p className="text-sm text-gray-500">{challenge.description}</p>
-                  </div>
-                ))}
-            </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-6">
+        {/* Header with Child Switcher */}
+        <div className="sm:flex sm:items-center sm:justify-between">
+          <div className="sm:flex-auto">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              Welcome{user?.name ? `, ${user.name}` : ''}!
+            </h1>
           </div>
-        </div>
-      </div>
-
-      {/* Recent journal entries */}
-      <div className="bg-white shadow sm:rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Journal Entries</h3>
-          <div className="mt-5">
-            <div className="space-y-4">
-              {/* Placeholder for journal entries */}
-              <p className="text-sm text-gray-500">No recent journal entries.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Challenge of the Day */}
-      <div className="bg-white shadow sm:rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="sm:flex sm:items-center sm:justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Challenge of the Day</h2>
-          </div>
-
-          {error ? (
-            <div className="mt-4 text-red-600">{error}</div>
-          ) : dailyChallenge ? (
-            <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {dailyChallenge.title}
-              </h3>
-              <p className="text-gray-500 mb-4">{dailyChallenge.description}</p>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-900">Goal</h4>
-                  <p className="text-gray-500">{dailyChallenge.goal}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Tip</h4>
-                  <p className="text-gray-500">{dailyChallenge.tip}</p>
-                </div>
-              </div>
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={handleStartChallenge}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Start Challenge
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-4 text-gray-500">Loading challenge...</div>
+          {children && children.length > 0 && (
+            <ChildSwitcher
+              children={children}
+              selectedChildId={selectedChildId}
+              onChildSelect={setSelectedChildId}
+            />
           )}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <ChallengeCard
+              challenge={dailyChallenge ?? null}
+              isLoading={isLoadingChallenge}
+              error={error}
+              isPremium={true} // TODO: Get from user's plan
+              onStartChallenge={handleStartChallenge}
+            />
+            
+            <StreakTracker
+              summary={progressSummary ?? null}
+              isLoading={isLoadingProgress}
+            />
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            <JournalPreview
+              latestEntry={latestJournalEntry ?? null}
+              isPremium={true} // TODO: Get from user's plan
+              onAddEntry={handleAddJournalEntry}
+            />
+
+            <CalendarStrip
+              days={calendarDays}
+              onPlanAhead={handlePlanAhead}
+            />
+          </div>
         </div>
       </div>
     </div>
