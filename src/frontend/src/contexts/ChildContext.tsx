@@ -159,7 +159,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
         mood_rating: data.moodRating
       };
 
-      await apiRequest('/challenges/complete', {
+      await apiRequest('/complete', {
         method: 'POST',
         body: input
       });
