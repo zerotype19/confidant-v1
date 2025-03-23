@@ -70,8 +70,27 @@ export function Techniques() {
     }
   };
 
-  if (isLoading) return <Text>Loading...</Text>;
-  if (error) return <Text>Error loading techniques</Text>;
+  if (isLoading) {
+    return (
+      <Box minH="100vh" bg="gray.50">
+        <DashboardNav />
+        <Container maxW="container.xl" py={8}>
+          <Text>Loading techniques...</Text>
+        </Container>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box minH="100vh" bg="gray.50">
+        <DashboardNav />
+        <Container maxW="container.xl" py={8}>
+          <Text color="red.500">Error loading techniques. Please try again later.</Text>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box minH="100vh" bg="gray.50">
