@@ -31,8 +31,15 @@ app.use('*', cors({
   maxAge: 86400,
 }));
 
+// Root route
+app.get('/', (c) => c.json({ 
+  status: 'ok',
+  message: 'Confidant API is running',
+  version: '1.0.0'
+}));
+
 // Health check
-app.get('/', (c) => c.json({ status: 'ok' }));
+app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
 // Mount the onboarding routes
 app.route('/api/onboarding', onboardingRouter);
@@ -45,21 +52,5 @@ app.route('/api/auth', authRouter);
 
 // Mount the challenges routes
 app.route('/api/challenges', challengesRouter);
-
-// Default route for SPA
-app.get('*', (c) => {
-  return c.html(`<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Confidant</title>
-      </head>
-      <body>
-        <div id="root"></div>
-        <script type="module" src="/src/main.tsx"></script>
-      </body>
-    </html>`);
-});
 
 export default app; 

@@ -1,155 +1,130 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { SignInButtons } from '@/components/auth/SignInButtons'
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  VStack,
+  Heading,
+  Text,
+  useToast,
+  Divider,
+  HStack,
+  Checkbox,
+} from '@chakra-ui/react'
+import { useAuth } from '@/contexts/auth-context'
 
 export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const { signIn } = useAuth()
+  const toast = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual auth logic
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Invalid credentials')
-      }
-
-      const data = await response.json()
-      // Store the token in localStorage
-      localStorage.setItem('auth_token', data.token)
+      await signIn(email, password)
       navigate('/dashboard')
     } catch (err) {
-      setError('Invalid email or password')
+      toast({
+        title: 'Error',
+        description: 'Invalid email or password',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <img
-          className="mx-auto h-12 w-auto"
-          src="/logo.svg"
-          alt="Confidant"
-        />
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/signup" className="font-medium text-primary-600 hover:text-primary-500">
-            Sign up
-          </Link>
-        </p>
-      </div>
+    <Box minH="100vh" bg="gray.50" py={12} px={4} sm:px={6} lg:px={8}>
+      <Box maxW="md" mx="auto">
+        <VStack spacing={8}>
+          <Box textAlign="center">
+            <img
+              src="/logo.svg"
+              alt="Confidant"
+              className="mx-auto h-12 w-auto"
+            />
+            <Heading as="h2" size="xl" mt={6}>
+              Sign in to your account
+            </Heading>
+            <Text mt={2} color="gray.600">
+              Don't have an account?{' '}
+              <Link to="/signup">
+                <Text as="span" color="primary.600" _hover={{ color: 'primary.500' }}>
+                  Sign up
+                </Text>
+              </Link>
+            </Text>
+          </Box>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-700">{error}</div>
-              </div>
-            )}
-            
-            <div>
-              <label htmlFor="email" className="label">
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input"
-                />
-              </div>
-            </div>
+          <Box bg="white" py={8} px={4} shadow="sm" rounded="lg" sm:px={10}>
+            <form onSubmit={handleSubmit}>
+              <VStack spacing={6}>
+                <FormControl isRequired>
+                  <FormLabel>Email address</FormLabel>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                  />
+                </FormControl>
 
-            <div>
-              <label htmlFor="password" className="label">
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input"
-                />
-              </div>
-            </div>
+                <FormControl isRequired>
+                  <FormLabel>Password</FormLabel>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </FormControl>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
-              </div>
+                <HStack justify="space-between" w="full">
+                  <Checkbox>Remember me</Checkbox>
+                  <Button variant="link" color="primary.600">
+                    Forgot your password?
+                  </Button>
+                </HStack>
 
-              <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
+                <Button
+                  type="submit"
+                  colorScheme="primary"
+                  w="full"
+                  isLoading={isLoading}
+                >
+                  {isLoading ? 'Signing in...' : 'Sign in'}
+                </Button>
+              </VStack>
+            </form>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full btn btn-primary"
-              >
-                {isLoading ? 'Signing in...' : 'Sign in'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <SignInButtons />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            <Box mt={6}>
+              <Divider />
+              <Text textAlign="center" my={4} color="gray.500">
+                Or continue with
+              </Text>
+              <VStack spacing={4}>
+                <Button w="full" variant="outline">
+                  Continue with Google
+                </Button>
+                <Button w="full" variant="outline">
+                  Continue with GitHub
+                </Button>
+              </VStack>
+            </Box>
+          </Box>
+        </VStack>
+      </Box>
+    </Box>
   )
 } 

@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Box, Spinner } from '@chakra-ui/react'
 
 interface SessionGuardProps {
   children: ReactNode
@@ -43,9 +44,9 @@ export default function SessionGuard({ children }: SessionGuardProps) {
   if (isAuthenticated === null) {
     // Show loading state while checking authentication
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-      </div>
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
+        <Spinner size="xl" color="primary.600" thickness="4px" />
+      </Box>
     );
   }
 
