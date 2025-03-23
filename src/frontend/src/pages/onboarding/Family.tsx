@@ -9,15 +9,20 @@ import {
   Heading,
   Text,
   useToast,
+  Spinner,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { useChildContext } from '../../contexts/ChildContext';
 import { apiRequest } from '../../utils/api';
+import Layout from '../../components/Layout';
 
 export default function FamilyOnboarding() {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
   const { setSelectedChild } = useChildContext();
@@ -25,6 +30,7 @@ export default function FamilyOnboarding() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       const response = await apiRequest('/children', {
@@ -52,6 +58,8 @@ export default function FamilyOnboarding() {
 
       navigate('/dashboard');
     } catch (error) {
+      console.error('Error creating child:', error);
+      setError(error instanceof Error ? error.message : 'Failed to add family member');
       toast({
         title: 'Error',
         description: 'Failed to add family member',
@@ -64,11 +72,18 @@ export default function FamilyOnboarding() {
     }
   };
 
-  return (
+  const content = (
     <Box maxW="md" mx="auto" mt={8} p={6} borderWidth={1} borderRadius={8}>
       <VStack spacing={6} align="stretch">
         <Heading size="lg">Welcome to Confidant</Heading>
         <Text>Let's start by adding your first family member.</Text>
+        
+        {error && (
+          <Alert status="error">
+            <AlertIcon />
+            {error}
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit}>
           <VStack spacing={4}>
@@ -104,4 +119,16 @@ export default function FamilyOnboarding() {
       </VStack>
     </Box>
   );
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <Box display="flex" justifyContent="center" alignItems="center" minH="100vh">
+          <Spinner size="xl" />
+        </Box>
+      </Layout>
+    );
+  }
+
+  return <Layout>{content}</Layout>;
 } 
