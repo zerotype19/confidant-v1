@@ -63,13 +63,13 @@ export function Challenges() {
     return childAge >= min && childAge <= max;
   };
 
-  const filteredChallenges = challenges?.filter((challenge: ChallengeWithStatus) => {
+  const filteredChallenges = challenges.filter(challenge => {
     const matchesSearch = challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       challenge.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPillar = selectedPillar.value === 'all' || challenge.pillar_id.toString() === selectedPillar.value;
-    const matchesStatus = selectedStatus.value === 'all' ||
-      (selectedStatus.value === 'completed' && challenge.completed) ||
-      (selectedStatus.value === 'incomplete' && !challenge.completed);
+    const matchesStatus = selectedStatus.value === 'all' || 
+      (selectedStatus.value === 'completed' && challenge.status === 'completed') ||
+      (selectedStatus.value === 'active' && challenge.status === 'active');
     const matchesAge = !selectedChild || isAgeInRange(selectedChild.age, challenge.age_range);
     return matchesSearch && matchesPillar && matchesStatus && matchesAge;
   });

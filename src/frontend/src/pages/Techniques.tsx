@@ -25,18 +25,12 @@ export function Techniques() {
 
   const { data: techniques, isLoading, error, completeTechnique } = useTechniques();
 
-  const filteredTechniques = techniques?.filter(technique => {
+  const filteredTechniques = techniques.filter(technique => {
     const matchesSearch = technique.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       technique.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesPillar = !selectedPillar || 
-      technique.pillar_ids.includes(parseInt(selectedPillar));
-    
-    // Check if the technique is age-appropriate for the selected child
-    const isAgeAppropriate = selectedChild ? 
-      technique.age_range === selectedChild.age_range : true;
-
-    return matchesSearch && matchesPillar && isAgeAppropriate;
+    const matchesPillar = selectedPillar.value === 'all' || technique.pillar_id.toString() === selectedPillar.value;
+    const matchesAge = !selectedChild || isAgeInRange(selectedChild.age, technique.age_range);
+    return matchesSearch && matchesPillar && matchesAge;
   });
 
   const handleCompleteTechnique = async (techniqueId: string, reflection?: string, moodRating?: number) => {
