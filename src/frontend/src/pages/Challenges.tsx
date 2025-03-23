@@ -8,6 +8,7 @@ import {
   Input,
   InputGroup,
   SimpleGrid,
+  Container,
 } from '@chakra-ui/react';
 import { Select } from 'chakra-react-select';
 import { useToast } from '@chakra-ui/toast';
@@ -15,6 +16,8 @@ import { ChallengeCard } from '../components/ChallengeCard';
 import { ChallengeWithStatus } from '../types/challenge';
 import { useChildContext } from '../contexts/ChildContext';
 import SessionGuard from '../components/SessionGuard';
+import { DashboardNav } from '../components/dashboard/DashboardNav';
+import { ChildSwitcher } from '../components/dashboard/ChildSwitcher';
 
 export function Challenges() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,7 +25,7 @@ export function Challenges() {
   const [selectedStatus, setSelectedStatus] = useState({ value: 'all', label: 'All Status' });
   const toast = useToast();
 
-  const { challenges, isLoading, error, completeChallenge } = useChildContext();
+  const { selectedChild, childList, challenges, isLoading, error, completeChallenge, setSelectedChild } = useChildContext();
 
   const pillarOptions = [
     { value: 'all', label: 'All Pillars' },
@@ -62,7 +65,8 @@ export function Challenges() {
     const matchesStatus = selectedStatus.value === 'all' ||
       (selectedStatus.value === 'completed' && challenge.completed) ||
       (selectedStatus.value === 'incomplete' && !challenge.completed);
-    return matchesSearch && matchesPillar && matchesStatus;
+    const matchesAge = !selectedChild || challenge.age_range === selectedChild.age.toString();
+    return matchesSearch && matchesPillar && matchesStatus && matchesAge;
   });
 
   const handleComplete = async (reflection?: string, moodRating?: number) => {
@@ -88,8 +92,20 @@ export function Challenges() {
 
   return (
     <SessionGuard>
-      <Box p={8}>
-        <VStack gap={8} alignItems="stretch">
+      <DashboardNav />
+      <Container maxW="container.xl" py={8}>
+        <VStack spacing={8} align="stretch">
+          <Box>
+            <ChildSwitcher
+              children={childList}
+              selectedChildId={selectedChild?.id || null}
+              onChildSelect={(childId) => {
+                const child = childList.find(c => c.id === childId) || null;
+                setSelectedChild(child);
+              }}
+            />
+          </Box>
+
           <Box>
             <Heading size="lg">Challenges</Heading>
             <Text color="gray.600">Browse and complete challenges to help your child grow</Text>
@@ -123,7 +139,11 @@ export function Challenges() {
             </HStack>
           </Box>
 
-          {filteredChallenges?.length === 0 ? (
+          {!selectedChild ? (
+            <Box textAlign="center" py={8}>
+              <Text>Please select a child to view their age-appropriate challenges.</Text>
+            </Box>
+          ) : filteredChallenges?.length === 0 ? (
             <Box textAlign="center" py={8}>
               <Text>No challenges found matching your criteria.</Text>
             </Box>
@@ -139,7 +159,7 @@ export function Challenges() {
             </SimpleGrid>
           )}
         </VStack>
-      </Box>
+      </Container>
     </SessionGuard>
   );
 } 
