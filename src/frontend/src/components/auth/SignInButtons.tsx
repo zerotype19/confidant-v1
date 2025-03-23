@@ -1,9 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { FaGoogle } from 'react-icons/fa';
+import { useToast } from '@/hooks/use-toast';
 
 export function SignInButtons() {
-  const handleGoogleSignIn = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  const { toast } = useToast();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to sign in with Google",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

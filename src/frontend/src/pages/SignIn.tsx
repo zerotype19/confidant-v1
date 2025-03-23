@@ -16,6 +16,7 @@ import {
   Container,
 } from '@chakra-ui/react'
 import { useAuth } from '@/contexts/auth-context'
+import { SignInButtons } from '@/components/auth/SignInButtons'
 
 export default function SignIn() {
   const [email, setEmail] = useState('')
@@ -31,11 +32,18 @@ export default function SignIn() {
 
     try {
       await signIn(email, password)
+      toast({
+        title: 'Success',
+        description: 'You have been logged in successfully.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      })
       navigate('/dashboard')
     } catch (err) {
       toast({
         title: 'Error',
-        description: 'Invalid email or password',
+        description: err instanceof Error ? err.message : 'Invalid email or password',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -78,6 +86,7 @@ export default function SignIn() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
+                    placeholder="name@example.com"
                   />
                 </FormControl>
 
@@ -88,6 +97,7 @@ export default function SignIn() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
+                    placeholder="••••••••"
                   />
                 </FormControl>
 
@@ -114,14 +124,7 @@ export default function SignIn() {
               <Text textAlign="center" my={4} color="gray.500">
                 Or continue with
               </Text>
-              <VStack spacing={4}>
-                <Button w="full" variant="outline">
-                  Continue with Google
-                </Button>
-                <Button w="full" variant="outline">
-                  Continue with GitHub
-                </Button>
-              </VStack>
+              <SignInButtons />
             </Box>
           </Box>
         </VStack>
