@@ -9,13 +9,13 @@ export interface Challenge {
   pillar_id: number;
   age_range: string;
   difficulty_level: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ChallengeWithStatus extends Challenge {
-  completed: boolean;
-  completed_at: string | null;
+  status: 'active' | 'completed';
+  completed_at?: string;
 }
 
 export interface ChallengeLog {
