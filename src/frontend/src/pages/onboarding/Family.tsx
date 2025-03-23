@@ -11,7 +11,8 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { useChild } from '../../contexts/ChildContext';
+import { useChildContext } from '../../contexts/ChildContext';
+import { apiRequest } from '../../utils/api';
 
 export default function FamilyOnboarding() {
   const [name, setName] = useState('');
@@ -19,19 +20,27 @@ export default function FamilyOnboarding() {
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
   const navigate = useNavigate();
-  const { addChild } = useChild();
+  const { setSelectedChild } = useChildContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await addChild({
-        name,
-        age: parseInt(age),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+      const response = await apiRequest('/children', {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          age: parseInt(age),
+        }),
       });
+
+      if (!response || !response.id) {
+        throw new Error('Failed to create child');
+      }
+
+      // Set the newly created child as selected
+      setSelectedChild(response.id);
 
       toast({
         title: 'Success',
