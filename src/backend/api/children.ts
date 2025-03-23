@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { getClaims } from '../auth';
+import { getClaims, verifySession } from '../auth';
 import { D1Database } from '../types';
 import { z } from 'zod';
 
@@ -8,6 +8,11 @@ interface Env {
   DB: D1Database;
   R2: R2Bucket;
   R2_PUBLIC_URL: string;
+  JWT_SECRET: string;
+}
+
+interface R2Bucket {
+  put: (key: string, value: File, options?: { httpMetadata?: { contentType: string } }) => Promise<void>;
 }
 
 const childrenRouter = new Hono<{ Bindings: Env }>();
@@ -20,7 +25,7 @@ const ChildSchema = z.object({
 });
 
 // Add a child
-childrenRouter.post('/', async (c) => {
+childrenRouter.post('/', verifySession, async (c) => {
   try {
     const claims = getClaims(c);
     const { DB } = c.env;
@@ -68,7 +73,7 @@ childrenRouter.post('/', async (c) => {
 });
 
 // Update a child
-childrenRouter.put('/:id', async (c) => {
+childrenRouter.put('/:id', verifySession, async (c) => {
   try {
     const claims = getClaims(c);
     const { DB } = c.env;
@@ -117,7 +122,7 @@ childrenRouter.put('/:id', async (c) => {
 });
 
 // Delete a child
-childrenRouter.delete('/:id', async (c) => {
+childrenRouter.delete('/:id', verifySession, async (c) => {
   try {
     const claims = getClaims(c);
     const { DB } = c.env;
@@ -148,7 +153,7 @@ childrenRouter.delete('/:id', async (c) => {
 });
 
 // Get all children for the family
-childrenRouter.get('/', async (c) => {
+childrenRouter.get('/', verifySession, async (c) => {
   try {
     const claims = getClaims(c);
     const { DB } = c.env;
@@ -179,7 +184,7 @@ childrenRouter.get('/', async (c) => {
 });
 
 // Handle image upload
-childrenRouter.post('/upload', async (c) => {
+childrenRouter.post('/upload', verifySession, async (c) => {
   try {
     const { R2, R2_PUBLIC_URL } = c.env;
     const formData = await c.req.formData();
