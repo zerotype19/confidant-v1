@@ -46,7 +46,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
     console.log('Getting challenge for child:', childId);
 
     if (!childId) {
-      return c.json({ challenge: null, completed: false });
+      return c.json({ success: true, challenge: null, completed: false });
     }
 
     // Verify child belongs to user's family
@@ -58,7 +58,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
 
     if (!child) {
       console.log('Child not found:', childId);
-      return c.json({ error: 'Child not found' }, 404);
+      return c.json({ success: false, error: 'Child not found' }, 404);
     }
 
     console.log('Found child:', child);
@@ -80,6 +80,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
       `).bind(completedToday.challenge_id).first<Challenge>();
       
       return c.json({ 
+        success: true,
         challenge,
         completed: true 
       });
@@ -165,11 +166,12 @@ challengesRouter.get('/today', verifySession, async (c) => {
 
       if (!fallbackChallenge) {
         console.log('No suitable challenges found');
-        return c.json({ error: 'No suitable challenges found' }, 404);
+        return c.json({ success: false, error: 'No suitable challenges found' }, 404);
       }
 
       console.log('Found fallback challenge:', fallbackChallenge);
       return c.json({ 
+        success: true,
         challenge: fallbackChallenge,
         completed: false 
       });
@@ -177,12 +179,13 @@ challengesRouter.get('/today', verifySession, async (c) => {
 
     console.log('Found challenge:', challenge);
     return c.json({ 
+      success: true,
       challenge,
       completed: false 
     });
   } catch (error) {
     console.error('Error getting today\'s challenge:', error);
-    return c.json({ error: 'Failed to get today\'s challenge' }, 500);
+    return c.json({ success: false, error: 'Failed to get today\'s challenge' }, 500);
   }
 });
 
@@ -266,7 +269,7 @@ challengesRouter.get('/', verifySession, async (c) => {
     `).all<Challenge>();
 
     if (!childId) {
-      return c.json({ challenges: [] });
+      return c.json({ success: true, results: [] });
     }
 
     // Get completed challenges for this child
@@ -288,10 +291,10 @@ challengesRouter.get('/', verifySession, async (c) => {
       completed_at: completedMap[challenge.id] || null
     }));
 
-    return c.json({ challenges: challengesWithStatus });
+    return c.json({ success: true, results: challengesWithStatus });
   } catch (error) {
     console.error('Error getting challenges:', error);
-    return c.json({ error: 'Failed to get challenges' }, 500);
+    return c.json({ success: false, error: 'Failed to get challenges' }, 500);
   }
 });
 
