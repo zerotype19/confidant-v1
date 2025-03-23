@@ -13,7 +13,6 @@ import {
 import { Select } from 'chakra-react-select';
 import { useToast } from '@chakra-ui/toast';
 import { ChallengeCard } from '../components/ChallengeCard';
-import { ChallengeWithStatus } from '../types/challenge';
 import { useChildContext } from '../contexts/ChildContext';
 import SessionGuard from '../components/SessionGuard';
 import { DashboardNav } from '../components/dashboard/DashboardNav';

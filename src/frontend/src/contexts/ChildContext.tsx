@@ -13,7 +13,7 @@ interface Child {
 
 interface ChildContextType {
   selectedChild: Child | null;
-  setSelectedChild: (child: Child | null) => void;
+  setSelectedChild: (childId: string) => void;
   childList: Child[];
   challenges: ChallengeWithStatus[];
   todaysChallenge: ChallengeWithStatus | null;
@@ -37,12 +37,17 @@ interface ChildProviderProps {
 }
 
 export function ChildProvider({ children }: ChildProviderProps) {
-  const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  const [selectedChild, setSelectedChildState] = useState<Child | null>(null);
   const [childList, setChildList] = useState<Child[]>([]);
   const [challenges, setChallenges] = useState<ChallengeWithStatus[]>([]);
   const [todaysChallenge, setTodaysChallenge] = useState<ChallengeWithStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  const setSelectedChild = (childId: string) => {
+    const child = childList.find(c => c.id === childId) || null;
+    setSelectedChildState(child);
+  };
 
   useEffect(() => {
     const fetchChildren = async () => {
@@ -54,7 +59,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
         }));
         setChildList(children);
         if (children.length > 0) {
-          setSelectedChild(children[0]);
+          setSelectedChild(children[0].id);
         }
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch children'));

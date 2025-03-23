@@ -17,7 +17,7 @@ interface Child {
 interface ChildSwitcherProps {
   selectedChild: Child | null;
   childList: Child[];
-  onChildSelect: (child: Child) => void;
+  onChildSelect: (childId: string) => void;
 }
 
 export function ChildSwitcher({ selectedChild, childList, onChildSelect }: ChildSwitcherProps) {
@@ -26,12 +26,7 @@ export function ChildSwitcher({ selectedChild, childList, onChildSelect }: Child
       <FormLabel>Select Child</FormLabel>
       <Select
         value={selectedChild?.id || ''}
-        onChange={(e) => {
-          const child = childList.find(c => c.id === e.target.value);
-          if (child) {
-            onChildSelect(child);
-          }
-        }}
+        onChange={(e) => onChildSelect(e.target.value)}
       >
         <option value="">Select a child...</option>
         {childList.map((child) => (
