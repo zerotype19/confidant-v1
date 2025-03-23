@@ -12,7 +12,7 @@ export async function apiRequest(endpoint: string, options: ApiOptions = {}) {
   // Add /api prefix to all endpoints
   const path = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(path, {
     method,
     headers: {
       'Content-Type': 'application/json',

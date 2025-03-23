@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ChallengeWithStatus, CompleteChallengeInput } from '../types/challenge';
 import { API_URL } from '../config';
+import { apiRequest } from '../utils/api';
 
 interface Child {
   id: string;
@@ -38,29 +39,13 @@ export function ChildProvider({ children }: ChildProviderProps) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [childrenRes, challengesRes, todaysChallengeRes] = await Promise.all([
-          fetch(`${API_URL}/api/children`, {
-            credentials: 'include'
-          }),
-          fetch(`${API_URL}/api/challenges`, {
-            credentials: 'include'
-          }),
-          fetch(`${API_URL}/api/challenges/today`, {
-            credentials: 'include'
-          })
-        ]);
-
-        if (!childrenRes.ok || !challengesRes.ok || !todaysChallengeRes.ok) {
-          throw new Error('Failed to fetch data');
-        }
-
         const [childrenData, challengesData, todaysChallengeData] = await Promise.all([
-          childrenRes.json(),
-          challengesRes.json(),
-          todaysChallengeRes.json()
+          apiRequest('/children'),
+          apiRequest('/challenges'),
+          apiRequest('/challenges/today')
         ]);
 
-        setChildList(childrenData);
+        setChildList(childrenData.children);
         setChallenges(challengesData.challenges);
         setTodaysChallenge(todaysChallengeData.challenge);
         setIsLoading(false);

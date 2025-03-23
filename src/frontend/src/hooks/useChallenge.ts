@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { API_URL } from '../config';
 import { CompleteChallengeInput, TodaysChallengeResponse, ChallengeWithStatus } from '../types/challenge';
+import { apiRequest } from '../utils/api';
 
 export function useChallenge(childId: string) {
   const queryClient = useQueryClient();
@@ -8,65 +8,34 @@ export function useChallenge(childId: string) {
   // Get today's challenge
   const { data: todaysChallenge, isLoading: isLoadingToday } = useQuery<TodaysChallengeResponse>({
     queryKey: ['todaysChallenge', childId],
-    queryFn: async () => {
-      const response = await fetch(`${API_URL}/api/challenges/today?child_id=${childId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch today\'s challenge');
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest(`/challenges/today?child_id=${childId}`),
     enabled: !!childId
   });
 
   // Get all challenges
   const { data: allChallenges, isLoading: isLoadingAll } = useQuery<{ challenges: ChallengeWithStatus[] }>({
     queryKey: ['challenges', childId],
-    queryFn: async () => {
-      const response = await fetch(`${API_URL}/api/challenges?child_id=${childId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch challenges');
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest(`/challenges?child_id=${childId}`),
     enabled: !!childId
   });
 
-  // Complete a challenge
-  const { mutateAsync: completeChallenge, isPending: isCompleting } = useMutation<
-    TodaysChallengeResponse,
-    Error,
-    CompleteChallengeInput
-  >({
-    mutationFn: async (input) => {
-      const response = await fetch(`${API_URL}/challenges/${childId}/complete`, {
+  // Complete challenge mutation
+  const completeMutation = useMutation({
+    mutationFn: (data: CompleteChallengeInput) => 
+      apiRequest(`/challenges/${data.challenge_id}/complete`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(input),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to complete challenge');
-      }
-      return response.json();
-    },
+        body: data
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todaysChallenge', childId] });
-      queryClient.invalidateQueries({ queryKey: ['challenges', childId] });
-    },
+      queryClient.invalidateQueries({ queryKey: ['todaysChallenge'] });
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
+    }
   });
 
   return {
     todaysChallenge: todaysChallenge?.challenge,
-    isCompleted: todaysChallenge?.completed ?? false,
-    isLoadingToday,
-    allChallenges: allChallenges?.challenges ?? [],
-    isLoadingAll,
-    completeChallenge,
-    isCompleting
+    allChallenges: allChallenges?.challenges || [],
+    isLoading: isLoadingToday || isLoadingAll,
+    completeChallenge: completeMutation.mutate
   };
 } 
