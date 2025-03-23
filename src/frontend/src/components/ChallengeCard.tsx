@@ -5,13 +5,15 @@ import {
   Text,
   VStack,
   HStack,
+  Heading,
+  Badge,
 } from '@chakra-ui/react';
 import { CompleteChallengeModal } from './CompleteChallengeModal';
 import { ChallengeWithStatus } from '../types/challenge';
 
 interface ChallengeCardProps {
   challenge: ChallengeWithStatus;
-  onComplete: (reflection?: string, moodRating?: number) => Promise<void>;
+  onComplete: () => void;
 }
 
 export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
@@ -20,66 +22,45 @@ export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
 
   const handleComplete = async (reflection?: string, moodRating?: number) => {
     if (onComplete) {
-      await onComplete(reflection, moodRating);
+      await onComplete();
     }
     setIsOpen(false);
   };
 
   return (
     <Box
-      borderWidth="1px"
-      borderRadius="lg"
-      overflow="hidden"
-      p={4}
+      p={6}
       bg="white"
-      shadow="sm"
+      rounded="lg"
+      shadow="md"
+      border="1px"
+      borderColor="gray.200"
     >
-      <VStack align="stretch" gap={4}>
+      <VStack align="stretch" spacing={4}>
         <Box>
-          <Text fontSize="lg" fontWeight="semibold">
-            {challenge.title}
+          <Heading size="md">{challenge.title}</Heading>
+          <Text color="gray.600" mt={1}>
+            {challenge.description}
           </Text>
-          <Text color="gray.600">{challenge.description}</Text>
         </Box>
 
-        <HStack gap={2}>
-          {challenge.completed ? (
-            <>
-              <Button
-                colorScheme="green"
-                disabled={isSubmitting}
-                flex={1}
-              >
-                Completed
-              </Button>
-              <Button
-                variant="outline"
-                colorScheme="blue"
-                onClick={() => setIsOpen(true)}
-                flex={1}
-              >
-                View Reflection
-              </Button>
-            </>
-          ) : (
-            <Button
-              colorScheme="blue"
-              onClick={() => setIsOpen(true)}
-              disabled={isSubmitting}
-              flex={1}
-            >
-              Complete Challenge
-            </Button>
-          )}
-        </HStack>
-      </VStack>
+        <Box>
+          <Badge colorScheme="primary" mr={2}>
+            Age {challenge.age_range}
+          </Badge>
+          <Badge colorScheme="green">
+            Level {challenge.difficulty_level}
+          </Badge>
+        </Box>
 
-      <CompleteChallengeModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        onComplete={handleComplete}
-        challenge={challenge}
-      />
+        <Button
+          colorScheme="primary"
+          onClick={onComplete}
+          size="lg"
+        >
+          Complete Challenge
+        </Button>
+      </VStack>
     </Box>
   );
 } 

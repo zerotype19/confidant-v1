@@ -2,6 +2,14 @@ import {
   Button,
   VStack,
   Text,
+  FormControl,
+  FormLabel,
+  Textarea,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
 } from '@chakra-ui/react';
 import {
   Modal,
@@ -15,38 +23,29 @@ import { Divider } from '@chakra-ui/layout';
 import { useToast } from '@chakra-ui/toast';
 import { useState } from 'react';
 import { ChallengeWithStatus } from '../types/challenge';
-import { apiRequest } from '../utils/api';
 
 interface CompleteChallengeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  challenge: ChallengeWithStatus;
-  onComplete: () => void;
+  onSubmit: (reflection?: string, moodRating?: number) => Promise<void>;
 }
 
 export function CompleteChallengeModal({
   isOpen,
   onClose,
-  challenge,
-  onComplete,
+  onSubmit,
 }: CompleteChallengeModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reflection, setReflection] = useState('');
+  const [moodRating, setMoodRating] = useState(5);
   const toast = useToast();
 
-  const handleComplete = async () => {
+  const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-      await apiRequest(`/challenges/${challenge.id}/complete`, {
-        method: 'POST',
-      });
-      toast({
-        title: 'Challenge completed!',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      onComplete();
-      onClose();
+      await onSubmit(reflection, moodRating);
+      setReflection('');
+      setMoodRating(5);
     } catch (error) {
       toast({
         title: 'Error completing challenge',
@@ -67,10 +66,31 @@ export function CompleteChallengeModal({
         <ModalHeader>Complete Challenge</ModalHeader>
         <ModalBody>
           <VStack gap={4} align="stretch">
-            <Text>Are you sure you want to mark this challenge as complete?</Text>
-            <Divider />
-            <Text fontWeight="bold">{challenge.title}</Text>
-            <Text>{challenge.description}</Text>
+            <FormControl>
+              <FormLabel>How did it go?</FormLabel>
+              <Textarea
+                value={reflection}
+                onChange={(e) => setReflection(e.target.value)}
+                placeholder="Share your thoughts about this challenge..."
+                rows={4}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>How are you feeling? (1-10)</FormLabel>
+              <NumberInput
+                value={moodRating}
+                onChange={(_, value) => setMoodRating(value)}
+                min={1}
+                max={10}
+                step={1}
+              >
+                <NumberInputField />
+                <NumberInputStepper>
+                  <NumberIncrementStepper />
+                  <NumberDecrementStepper />
+                </NumberInputStepper>
+              </NumberInput>
+            </FormControl>
           </VStack>
         </ModalBody>
         <ModalFooter>
@@ -79,7 +99,7 @@ export function CompleteChallengeModal({
           </Button>
           <Button
             colorScheme="blue"
-            onClick={handleComplete}
+            onClick={handleSubmit}
             isLoading={isSubmitting}
           >
             Complete Challenge
