@@ -41,6 +41,12 @@ export function ChildProvider({ children }: ChildProviderProps) {
       try {
         const childrenData = await apiRequest('/children');
         setChildList(childrenData.children);
+        
+        // Auto-select child if there's only one
+        if (childrenData.children.length === 1 && !selectedChild) {
+          setSelectedChild(childrenData.children[0]);
+        }
+        
         setIsLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('An error occurred'));
