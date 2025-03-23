@@ -37,14 +37,16 @@ export function ChildSwitcher({ children = [], selectedChildId, onChildSelect }:
         <Menu>
           <MenuButton
             as={Button}
-            rightIcon={<ChevronDownIcon />}
             variant="ghost"
             size="lg"
             fontWeight="medium"
             color="gray.900"
             _hover={{ color: 'primary.600' }}
           >
-            {selectedChild?.name || 'Select Child'}
+            <HStack>
+              <Text>{selectedChild?.name || 'Select Child'}</Text>
+              <ChevronDownIcon />
+            </HStack>
           </MenuButton>
           <MenuList>
             {Array.isArray(children) && children.map((child) => (
