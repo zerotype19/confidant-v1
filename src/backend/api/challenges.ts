@@ -108,15 +108,6 @@ challengesRouter.get('/today', verifySession, async (c) => {
 
     console.log('Pillar usage:', pillarUsage.results);
 
-    // Check available challenges for this age range
-    const availableChallenges = await DB.prepare(`
-      SELECT * FROM challenges 
-      WHERE age_range LIKE ?
-      ORDER BY created_at DESC
-    `).bind(`%${child.age}%`).all<Challenge>();
-
-    console.log('Available challenges for age', child.age, ':', availableChallenges.results);
-
     // Create a map of pillar usage
     const pillarUsageMap = pillarUsage.results?.reduce((acc, { pillar_id, count }) => {
       acc[pillar_id] = count;
@@ -134,37 +125,50 @@ challengesRouter.get('/today', verifySession, async (c) => {
     // 4. Is randomly selected from matching challenges
     const challengeQuery = `
       WITH matching_challenges AS (
-        SELECT * FROM challenges 
-        WHERE age_range LIKE ? 
+        SELECT *, 
+          CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER) as min_age,
+          CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER) as max_age
+        FROM challenges 
+        WHERE ? BETWEEN CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER)
+          AND CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER)
         AND pillar_id = ?
         ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
       )
-      SELECT * FROM matching_challenges
+      SELECT id, title, description, goal, steps, example_dialogue, tip, pillar_id, age_range, difficulty_level, created_at, updated_at
+      FROM matching_challenges
       ORDER BY RANDOM()
       LIMIT 1
     `;
     console.log('Challenge query:', challengeQuery);
-    console.log('Query params:', [`%${child.age}%`, leastUsedPillar, ...recentChallengeIds]);
+    console.log('Query params:', [child.age, leastUsedPillar, ...recentChallengeIds]);
 
     const challenge = await DB.prepare(challengeQuery)
-      .bind(`%${child.age}%`, leastUsedPillar, ...recentChallengeIds)
+      .bind(child.age, leastUsedPillar, ...recentChallengeIds)
       .first<Challenge>();
 
     if (!challenge) {
       console.log('No challenge found with least used pillar, trying fallback');
       // If no challenge found with the least used pillar, try any age-appropriate challenge
       const fallbackQuery = `
-        SELECT * FROM challenges 
-        WHERE age_range LIKE ? 
-        ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
+        WITH matching_challenges AS (
+          SELECT *, 
+            CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER) as min_age,
+            CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER) as max_age
+          FROM challenges 
+          WHERE ? BETWEEN CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER)
+            AND CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER)
+          ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
+        )
+        SELECT id, title, description, goal, steps, example_dialogue, tip, pillar_id, age_range, difficulty_level, created_at, updated_at
+        FROM matching_challenges
         ORDER BY RANDOM() 
         LIMIT 1
       `;
       console.log('Fallback query:', fallbackQuery);
-      console.log('Fallback params:', [`%${child.age}%`, ...recentChallengeIds]);
+      console.log('Fallback params:', [child.age, ...recentChallengeIds]);
 
       const fallbackChallenge = await DB.prepare(fallbackQuery)
-        .bind(`%${child.age}%`, ...recentChallengeIds)
+        .bind(child.age, ...recentChallengeIds)
         .first<Challenge>();
 
       if (!fallbackChallenge) {
