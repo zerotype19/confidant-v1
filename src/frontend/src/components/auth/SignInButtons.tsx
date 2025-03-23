@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@chakra-ui/react';
 import { FaGoogle } from 'react-icons/fa';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@chakra-ui/react';
 
 export function SignInButtons() {
-  const { toast } = useToast();
+  const toast = useToast();
 
   const handleGoogleSignIn = async () => {
     try {
@@ -12,21 +12,22 @@ export function SignInButtons() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to sign in with Google",
-        variant: "destructive",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
       });
     }
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <Button
-        variant="outline"
-        className="flex items-center gap-2"
-        onClick={handleGoogleSignIn}
-      >
-        <FaGoogle className="h-5 w-5" />
-        Sign in with Google
-      </Button>
-    </div>
+    <Button
+      variant="outline"
+      leftIcon={<FaGoogle />}
+      onClick={handleGoogleSignIn}
+      w="full"
+      colorScheme="gray"
+    >
+      Sign in with Google
+    </Button>
   );
 } 

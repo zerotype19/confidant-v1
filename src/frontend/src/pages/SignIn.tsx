@@ -124,7 +124,9 @@ export default function SignIn() {
               <Text textAlign="center" my={4} color="gray.500">
                 Or continue with
               </Text>
-              <SignInButtons />
+              <Box px={4}>
+                <SignInButtons />
+              </Box>
             </Box>
           </Box>
         </VStack>
