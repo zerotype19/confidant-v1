@@ -14,13 +14,13 @@ import {
 import { Divider } from '@chakra-ui/layout';
 import { useToast } from '@chakra-ui/toast';
 import { useState } from 'react';
-import { Challenge } from '../types/challenge';
+import { ChallengeWithStatus } from '../types/challenge';
 import { apiRequest } from '../utils/api';
 
 interface CompleteChallengeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  challenge: Challenge;
+  challenge: ChallengeWithStatus;
   onComplete: () => void;
 }
 
