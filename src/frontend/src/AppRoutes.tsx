@@ -4,6 +4,7 @@ import { Challenges } from './pages/Challenges';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import SessionGuard from './components/SessionGuard';
+import FamilyOnboarding from './pages/onboarding/Family';
 
 export default function AppRoutes() {
   return (
@@ -30,6 +31,11 @@ export default function AppRoutes() {
       <Route path="/challenges" element={
         <SessionGuard>
           <Challenges />
+        </SessionGuard>
+      } />
+      <Route path="/onboarding/family" element={
+        <SessionGuard>
+          <FamilyOnboarding />
         </SessionGuard>
       } />
     </Routes>
