@@ -125,12 +125,8 @@ challengesRouter.get('/today', verifySession, async (c) => {
     // 4. Is randomly selected from matching challenges
     const challengeQuery = `
       WITH matching_challenges AS (
-        SELECT *, 
-          CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER) as min_age,
-          CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER) as max_age
-        FROM challenges 
-        WHERE ? BETWEEN CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER)
-          AND CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER)
+        SELECT * FROM challenges 
+        WHERE age_range = '6-9'
         AND pillar_id = ?
         ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
       )
@@ -140,10 +136,10 @@ challengesRouter.get('/today', verifySession, async (c) => {
       LIMIT 1
     `;
     console.log('Challenge query:', challengeQuery);
-    console.log('Query params:', [child.age, leastUsedPillar, ...recentChallengeIds]);
+    console.log('Query params:', [leastUsedPillar, ...recentChallengeIds]);
 
     const challenge = await DB.prepare(challengeQuery)
-      .bind(child.age, leastUsedPillar, ...recentChallengeIds)
+      .bind(leastUsedPillar, ...recentChallengeIds)
       .first<Challenge>();
 
     if (!challenge) {
@@ -151,12 +147,8 @@ challengesRouter.get('/today', verifySession, async (c) => {
       // If no challenge found with the least used pillar, try any age-appropriate challenge
       const fallbackQuery = `
         WITH matching_challenges AS (
-          SELECT *, 
-            CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER) as min_age,
-            CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER) as max_age
-          FROM challenges 
-          WHERE ? BETWEEN CAST(substr(age_range, 1, instr(age_range, '-') - 1) AS INTEGER)
-            AND CAST(substr(age_range, instr(age_range, '-') + 1) AS INTEGER)
+          SELECT * FROM challenges 
+          WHERE age_range = '6-9'
           ${recentChallengeIds.length ? `AND id NOT IN (${recentChallengeIds.map(() => '?').join(',')})` : ''}
         )
         SELECT id, title, description, goal, steps, example_dialogue, tip, pillar_id, age_range, difficulty_level, created_at, updated_at
@@ -165,10 +157,10 @@ challengesRouter.get('/today', verifySession, async (c) => {
         LIMIT 1
       `;
       console.log('Fallback query:', fallbackQuery);
-      console.log('Fallback params:', [child.age, ...recentChallengeIds]);
+      console.log('Fallback params:', [...recentChallengeIds]);
 
       const fallbackChallenge = await DB.prepare(fallbackQuery)
-        .bind(child.age, ...recentChallengeIds)
+        .bind(...recentChallengeIds)
         .first<Challenge>();
 
       if (!fallbackChallenge) {
