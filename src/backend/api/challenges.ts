@@ -108,6 +108,15 @@ challengesRouter.get('/today', verifySession, async (c) => {
 
     console.log('Pillar usage:', pillarUsage.results);
 
+    // Check available challenges for this age range
+    const availableChallenges = await DB.prepare(`
+      SELECT * FROM challenges 
+      WHERE age_range LIKE ?
+      ORDER BY created_at DESC
+    `).bind(`%${child.age}%`).all<Challenge>();
+
+    console.log('Available challenges for age', child.age, ':', availableChallenges.results);
+
     // Create a map of pillar usage
     const pillarUsageMap = pillarUsage.results?.reduce((acc, { pillar_id, count }) => {
       acc[pillar_id] = count;
