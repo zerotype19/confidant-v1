@@ -58,7 +58,7 @@ export function Dashboard() {
 
   const handleComplete = async (reflection?: string, moodRating?: number) => {
     try {
-      await completeChallenge(reflection, moodRating);
+      await completeChallenge({ reflection, moodRating });
       toast({
         title: 'Challenge completed!',
         description: 'Great job! Keep up the good work.',

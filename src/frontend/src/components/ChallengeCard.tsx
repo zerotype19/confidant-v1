@@ -1,14 +1,11 @@
-import { useState } from 'react';
 import {
   Box,
   Button,
   Text,
   VStack,
-  HStack,
   Heading,
   Badge,
 } from '@chakra-ui/react';
-import { CompleteChallengeModal } from './CompleteChallengeModal';
 import { ChallengeWithStatus } from '../types/challenge';
 
 interface ChallengeCardProps {
@@ -17,16 +14,6 @@ interface ChallengeCardProps {
 }
 
 export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting] = useState(false);
-
-  const handleComplete = async (reflection?: string, moodRating?: number) => {
-    if (onComplete) {
-      await onComplete(reflection, moodRating);
-    }
-    setIsOpen(false);
-  };
-
   return (
     <Box
       p={6}
