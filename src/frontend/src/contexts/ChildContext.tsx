@@ -48,8 +48,10 @@ export function ChildProvider({ children }: ChildProviderProps) {
     let isMounted = true;
 
     async function fetchChildren() {
+      console.log('Fetching children...');
       try {
         const response = await apiRequest('/children');
+        console.log('Children response:', response);
         if (isMounted) {
           setChildList(response);
           
@@ -83,6 +85,7 @@ export function ChildProvider({ children }: ChildProviderProps) {
 
     async function fetchChallenges() {
       if (!selectedChild) {
+        console.log('No child selected, skipping challenge fetch');
         if (isMounted) {
           setChallenges([]);
           setTodaysChallenge(null);
@@ -90,11 +93,14 @@ export function ChildProvider({ children }: ChildProviderProps) {
         return;
       }
 
+      console.log('Fetching challenges for child:', selectedChild.id);
       try {
         const [challengesData, todaysChallengeData] = await Promise.all([
           apiRequest(`/challenges?child_id=${selectedChild.id}`),
           apiRequest(`/challenges/today?child_id=${selectedChild.id}`)
         ]);
+        console.log('Challenges response:', challengesData);
+        console.log('Today\'s challenge response:', todaysChallengeData);
 
         if (isMounted) {
           setChallenges(challengesData);

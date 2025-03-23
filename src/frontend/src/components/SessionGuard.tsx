@@ -14,8 +14,10 @@ export default function SessionGuard({ children }: SessionGuardProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('Checking authentication...');
       try {
-        await apiRequest('/auth/validate');
+        const response = await apiRequest('/auth/validate');
+        console.log('Auth validation response:', response);
         setIsAuthenticated(true);
       } catch (err) {
         console.error('Auth error:', err);
