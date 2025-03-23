@@ -29,6 +29,34 @@ CREATE TABLE IF NOT EXISTS children (
   FOREIGN KEY (parent_id) REFERENCES parents(id) ON DELETE CASCADE
 );
 
+-- Create challenges table
+CREATE TABLE IF NOT EXISTS challenges (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  goal TEXT,
+  steps TEXT,
+  example_dialogue TEXT,
+  tip TEXT,
+  pillar_id INTEGER,
+  age_range TEXT,
+  difficulty_level INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create challenge_logs table
+CREATE TABLE IF NOT EXISTS challenge_logs (
+  id TEXT PRIMARY KEY,
+  child_id TEXT NOT NULL,
+  challenge_id TEXT NOT NULL,
+  reflection TEXT,
+  mood_rating INTEGER CHECK (mood_rating BETWEEN 1 AND 5),
+  completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE CASCADE,
+  FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE
+);
+
 -- Create trigger to update parents.updated_at
 CREATE TRIGGER IF NOT EXISTS parents_updated_at 
 AFTER UPDATE ON parents
@@ -42,5 +70,13 @@ CREATE TRIGGER IF NOT EXISTS children_updated_at
 AFTER UPDATE ON children
 BEGIN
   UPDATE children SET updated_at = CURRENT_TIMESTAMP
+  WHERE id = NEW.id;
+END;
+
+-- Create trigger to update challenges.updated_at
+CREATE TRIGGER IF NOT EXISTS challenges_updated_at 
+AFTER UPDATE ON challenges
+BEGIN
+  UPDATE challenges SET updated_at = CURRENT_TIMESTAMP
   WHERE id = NEW.id;
 END; 
