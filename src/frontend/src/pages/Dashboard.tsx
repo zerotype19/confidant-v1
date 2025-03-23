@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { API_URL } from '../config'
 
 interface Child {
   id: string
@@ -14,10 +17,21 @@ interface Challenge {
   description: string
   status: 'active' | 'completed' | 'archived'
   progress: number
+  goal: string
+  steps: string
+  example_dialogue: string
+  tip: string
+  pillar_id: number
+  age_range: string
+  difficulty_level: number
 }
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [selectedChild, setSelectedChild] = useState<string | null>(null)
+  const [dailyChallenge, setDailyChallenge] = useState<Challenge | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const { data: children, isLoading } = useQuery<Child[]>({
     queryKey: ['children'],
@@ -29,6 +43,35 @@ export default function Dashboard() {
       return response.json()
     },
   })
+
+  useEffect(() => {
+    const fetchDailyChallenge = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/challenges/today`, {
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Failed to fetch daily challenge')
+        }
+
+        const data = await response.json()
+        setDailyChallenge(data.challenge)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+        console.error('Error fetching daily challenge:', err)
+      }
+    }
+
+    fetchDailyChallenge()
+  }, [])
+
+  const handleStartChallenge = () => {
+    if (dailyChallenge) {
+      navigate(`/challenges/${dailyChallenge.id}`)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -124,6 +167,47 @@ export default function Dashboard() {
               <p className="text-sm text-gray-500">No recent journal entries.</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Challenge of the Day */}
+      <div className="bg-white shadow sm:rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="sm:flex sm:items-center sm:justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">Challenge of the Day</h2>
+          </div>
+
+          {error ? (
+            <div className="mt-4 text-red-600">{error}</div>
+          ) : dailyChallenge ? (
+            <div className="mt-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {dailyChallenge.title}
+              </h3>
+              <p className="text-gray-500 mb-4">{dailyChallenge.description}</p>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-900">Goal</h4>
+                  <p className="text-gray-500">{dailyChallenge.goal}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Tip</h4>
+                  <p className="text-gray-500">{dailyChallenge.tip}</p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={handleStartChallenge}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Start Challenge
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 text-gray-500">Loading challenge...</div>
+          )}
         </div>
       </div>
     </div>
