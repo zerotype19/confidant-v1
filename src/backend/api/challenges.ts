@@ -95,7 +95,7 @@ challengesRouter.get('/today', verifySession, async (c) => {
     const challenges = await DB.prepare(`
       SELECT * FROM challenges 
       WHERE age_range = ?
-      ORDER BY created_at DESC
+      ORDER BY id
     `).bind('6-9').all<Challenge>();
 
     if (!challenges.success) {
@@ -256,7 +256,7 @@ challengesRouter.get('/', verifySession, async (c) => {
 
     // Get all challenges
     const challenges = await DB.prepare(`
-      SELECT * FROM challenges ORDER BY created_at DESC
+      SELECT * FROM challenges ORDER BY id
     `).all<Challenge>();
 
     if (!childId) {
