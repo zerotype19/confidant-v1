@@ -115,8 +115,14 @@ export function ChildProvider({ children }: ChildProviderProps) {
         console.log('Today\'s challenge response:', todaysChallengeData);
 
         if (isMounted) {
-          setChallenges(challengesData);
-          setTodaysChallenge(todaysChallengeData);
+          // Handle the nested challenge structure
+          const todayChallenge = todaysChallengeData.challenge ? {
+            ...todaysChallengeData.challenge,
+            completed: todaysChallengeData.completed
+          } : null;
+          
+          setChallenges(challengesData.results || []);
+          setTodaysChallenge(todayChallenge);
         }
       } catch (err) {
         console.error('Error fetching challenges:', err);

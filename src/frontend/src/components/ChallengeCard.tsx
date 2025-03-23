@@ -10,7 +10,7 @@ import { ChallengeWithStatus } from '../types/challenge';
 
 interface ChallengeCardProps {
   challenge: ChallengeWithStatus;
-  onComplete: (reflection?: string, moodRating?: number) => Promise<void>;
+  onComplete: () => void;
 }
 
 export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
@@ -42,7 +42,7 @@ export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
 
         <Button
           colorScheme="primary"
-          onClick={() => onComplete()}
+          onClick={onComplete}
           size="lg"
         >
           Complete Challenge
