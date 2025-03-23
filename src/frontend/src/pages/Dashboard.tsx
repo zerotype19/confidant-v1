@@ -32,7 +32,6 @@ export default function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   // Fetch children data
   const { data: children, isLoading: isLoadingChildren } = useQuery<Child[]>({
@@ -90,7 +89,7 @@ export default function Dashboard() {
   });
 
   // Fetch latest journal entry
-  const { data: latestJournalEntry, isLoading: isLoadingJournal } = useQuery<JournalEntry | null>({
+  const { data: latestJournalEntry } = useQuery<JournalEntry | null>({
     queryKey: ['latestJournal', selectedChildId],
     queryFn: async () => {
       if (!selectedChildId) return null;
@@ -169,7 +168,7 @@ export default function Dashboard() {
             <ChallengeCard
               challenge={dailyChallenge ?? null}
               isLoading={isLoadingChallenge}
-              error={error}
+              error={null}
               isPremium={true} // TODO: Get from user's plan
               onStartChallenge={handleStartChallenge}
             />

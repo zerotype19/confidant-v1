@@ -33,7 +33,7 @@ export function CalendarStrip({ days, onPlanAhead }: CalendarStripProps) {
         </div>
 
         <div className="grid grid-cols-7 gap-2">
-          {days.map((day, index) => {
+          {days.map((day) => {
             const date = new Date(day.date);
             return (
               <div

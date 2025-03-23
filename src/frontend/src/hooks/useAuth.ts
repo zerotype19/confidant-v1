@@ -1,11 +1,10 @@
-import { StateCreator, create } from 'zustand';
+import { create } from 'zustand';
 
-interface User {
-  sub: string;
+export interface User {
+  id: string;
+  name: string;
   email: string;
-  name?: string;
-  auth_provider: string;
-  auth_provider_id: string;
+  image?: string;
 }
 
 interface AuthStore {
@@ -13,12 +12,12 @@ interface AuthStore {
   setUser: (user: User | null) => void;
 }
 
-const useAuthStore = create<AuthStore>((set: StateCreator<AuthStore>) => ({
+const useAuthStore = create<AuthStore>((set) => ({
   user: null,
-  setUser: (user: User | null) => set({ user }),
+  setUser: (user: User | null) => set(() => ({ user })),
 }));
 
-export const useAuth = () => {
+export function useAuth() {
   const { user, setUser } = useAuthStore();
   return { user, setUser };
-}; 
+} 
