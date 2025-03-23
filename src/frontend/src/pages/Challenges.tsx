@@ -58,6 +58,11 @@ export function Challenges() {
     );
   }
 
+  const isAgeInRange = (childAge: number, ageRange: string) => {
+    const [min, max] = ageRange.split('-').map(Number);
+    return childAge >= min && childAge <= max;
+  };
+
   const filteredChallenges = challenges?.filter((challenge: ChallengeWithStatus) => {
     const matchesSearch = challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       challenge.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -65,7 +70,7 @@ export function Challenges() {
     const matchesStatus = selectedStatus.value === 'all' ||
       (selectedStatus.value === 'completed' && challenge.completed) ||
       (selectedStatus.value === 'incomplete' && !challenge.completed);
-    const matchesAge = !selectedChild || challenge.age_range === selectedChild.age.toString();
+    const matchesAge = !selectedChild || isAgeInRange(selectedChild.age, challenge.age_range);
     return matchesSearch && matchesPillar && matchesStatus && matchesAge;
   });
 

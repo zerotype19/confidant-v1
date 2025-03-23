@@ -2,6 +2,7 @@ export interface Child {
   id: string;
   name: string;
   age: number;
+  age_range: string;
   avatar?: string;
   challenges?: Challenge[];
 }
