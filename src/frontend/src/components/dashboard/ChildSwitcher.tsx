@@ -7,9 +7,9 @@ interface ChildSwitcherProps {
   onChildSelect: (childId: string) => void;
 }
 
-export function ChildSwitcher({ children, selectedChildId, onChildSelect }: ChildSwitcherProps) {
+export function ChildSwitcher({ children = [], selectedChildId, onChildSelect }: ChildSwitcherProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const selectedChild = children.find(child => child.id === selectedChildId);
+  const selectedChild = Array.isArray(children) ? children.find(child => child.id === selectedChildId) : null;
 
   return (
     <div className="relative">
@@ -37,7 +37,7 @@ export function ChildSwitcher({ children, selectedChildId, onChildSelect }: Chil
           </button>
 
           {/* Dropdown Menu */}
-          {isDropdownOpen && (
+          {isDropdownOpen && Array.isArray(children) && (
             <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
               <div className="py-1" role="menu">
                 {children.map((child) => (
