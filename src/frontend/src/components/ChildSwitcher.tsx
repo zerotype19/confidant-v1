@@ -15,17 +15,17 @@ interface Child {
 }
 
 interface ChildSwitcherProps {
-  selectedChild: Child | null;
+  selectedChildId: string | null;
   childList: Child[];
   onChildSelect: (childId: string) => void;
 }
 
-export function ChildSwitcher({ selectedChild, childList, onChildSelect }: ChildSwitcherProps) {
+export function ChildSwitcher({ selectedChildId, childList, onChildSelect }: ChildSwitcherProps) {
   return (
     <FormControl>
       <FormLabel>Select Child</FormLabel>
       <Select
-        value={selectedChild?.id || ''}
+        value={selectedChildId || ''}
         onChange={(e) => onChildSelect(e.target.value)}
       >
         <option value="">Select a child...</option>

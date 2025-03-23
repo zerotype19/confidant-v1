@@ -90,7 +90,7 @@ export function Dashboard() {
         <VStack spacing={8} align="stretch">
           <Box>
             <ChildSwitcher
-              selectedChild={selectedChild}
+              selectedChildId={selectedChild?.id || null}
               childList={childList}
               onChildSelect={setSelectedChild}
             />
