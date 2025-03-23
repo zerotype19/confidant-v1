@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { Select } from 'chakra-react-select';
 import { DashboardNav } from '../components/DashboardNav';
-import { ChildSwitcher, Child } from '../components/ChildSwitcher';
+import { ChildSwitcher } from '../components/ChildSwitcher';
 import { TechniqueCard } from '../components/TechniqueCard';
 import { useChildContext } from '../contexts/ChildContext';
 import { useTechniques } from '../hooks/useTechniques';
