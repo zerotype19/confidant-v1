@@ -78,6 +78,7 @@ export function ChallengeCard({ challenge, onComplete }: ChallengeCardProps) {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         onComplete={handleComplete}
+        challenge={challenge}
       />
     </Box>
   );
