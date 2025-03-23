@@ -59,7 +59,11 @@ const FamilySchema = z.object({
 const ChildSchema = z.object({
   name: z.string().min(1).max(100),
   age: z.number().int().min(0).max(18),
-  avatarUrl: z.string().url().nullable().optional(),
+  avatarUrl: z.union([
+    z.string().url(),
+    z.string().length(0),
+    z.null(),
+  ]).optional().transform(val => val === '' ? null : val),
 });
 
 const onboardingRouter = new Hono<{ Bindings: Bindings }>();
@@ -127,9 +131,11 @@ onboardingRouter.post('/child', verifySession, async (c) => {
   const claims = getClaims(c);
   const { DB } = c.env;
   const body = await c.req.json();
+  console.log('Received child data:', body);
 
   try {
     const data = ChildSchema.parse(body);
+    console.log('Parsed child data:', data);
 
     // Get user's family
     const familyMember = await DB.prepare(`
@@ -150,10 +156,11 @@ onboardingRouter.post('/child', verifySession, async (c) => {
 
     return c.json({ childId, message: 'Child added successfully' }, 201);
   } catch (error) {
+    console.error('Child creation error:', error);
     if (error instanceof z.ZodError) {
       return c.json({ error: error.errors }, 400);
     }
-    return c.json({ error: 'Failed to add child' }, 500);
+    return c.json({ error: `Failed to add child: ${error.message}` }, 500);
   }
 });
 
